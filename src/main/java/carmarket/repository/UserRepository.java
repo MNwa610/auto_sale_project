@@ -13,6 +13,33 @@ import java.util.List;
 
 public class UserRepository {
 
+    public User create(User user) {
+        String sql = "INSERT INTO users (full_name, login, password_hash, role) " +
+                "VALUES (?, ?, ?, ?) RETURNING id, created_at";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, user.getFullName());
+            statement.setString(2, user.getLogin());
+            statement.setString(3, user.getPasswordHash());
+            statement.setString(4, user.getRole().name());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    user.setId(resultSet.getLong("id"));
+                    if (resultSet.getTimestamp("created_at") != null) {
+                        user.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при создании пользователя", e);
+        }
+
+        return user;
+    }
+
     public List<User> findAll() {
         List<User> users = new ArrayList<>();
         String sql = "SELECT id, full_name, login, password_hash, role, created_at " +
@@ -51,6 +78,38 @@ public class UserRepository {
         }
 
         return null;
+    }
+
+    public boolean update(User user) {
+        String sql = "UPDATE users SET full_name = ?, login = ?, password_hash = ?, role = ? " +
+                "WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, user.getFullName());
+            statement.setString(2, user.getLogin());
+            statement.setString(3, user.getPasswordHash());
+            statement.setString(4, user.getRole().name());
+            statement.setLong(5, user.getId());
+
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при обновлении пользователя", e);
+        }
+    }
+
+    public boolean delete(Long id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, id);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при удалении пользователя", e);
+        }
     }
 
     private User mapRow(ResultSet resultSet) throws SQLException {

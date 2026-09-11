@@ -8,10 +8,54 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CarRepository {
+
+    public Car create(Car car) {
+        String sql = "INSERT INTO cars (seller_id, brand, model, year, mileage, price, vin, " +
+                "body_type, transmission, fuel_type, engine_volume, description, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, created_at";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, car.getSellerId());
+            statement.setString(2, car.getBrand());
+            statement.setString(3, car.getModel());
+            statement.setInt(4, car.getYear());
+            statement.setInt(5, car.getMileage());
+            statement.setBigDecimal(6, car.getPrice());
+
+            if (car.getVin() != null) {
+                statement.setString(7, car.getVin());
+            } else {
+                statement.setNull(7, Types.VARCHAR);
+            }
+
+            statement.setString(8, car.getBodyType());
+            statement.setString(9, car.getTransmission());
+            statement.setString(10, car.getFuelType());
+            statement.setBigDecimal(11, car.getEngineVolume());
+            statement.setString(12, car.getDescription());
+            statement.setString(13, car.getStatus().name());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    car.setId(resultSet.getLong("id"));
+                    if (resultSet.getTimestamp("created_at") != null) {
+                        car.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при создании автомобиля", e);
+        }
+
+        return car;
+    }
 
     public List<Car> findAll() {
         List<Car> cars = new ArrayList<>();
@@ -53,6 +97,54 @@ public class CarRepository {
         }
 
         return null;
+    }
+
+    public boolean update(Car car) {
+        String sql = "UPDATE cars SET seller_id = ?, brand = ?, model = ?, year = ?, mileage = ?, " +
+                "price = ?, vin = ?, body_type = ?, transmission = ?, fuel_type = ?, " +
+                "engine_volume = ?, description = ?, status = ? WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, car.getSellerId());
+            statement.setString(2, car.getBrand());
+            statement.setString(3, car.getModel());
+            statement.setInt(4, car.getYear());
+            statement.setInt(5, car.getMileage());
+            statement.setBigDecimal(6, car.getPrice());
+
+            if (car.getVin() != null) {
+                statement.setString(7, car.getVin());
+            } else {
+                statement.setNull(7, Types.VARCHAR);
+            }
+
+            statement.setString(8, car.getBodyType());
+            statement.setString(9, car.getTransmission());
+            statement.setString(10, car.getFuelType());
+            statement.setBigDecimal(11, car.getEngineVolume());
+            statement.setString(12, car.getDescription());
+            statement.setString(13, car.getStatus().name());
+            statement.setLong(14, car.getId());
+
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при обновлении автомобиля", e);
+        }
+    }
+
+    public boolean delete(Long id) {
+        String sql = "DELETE FROM cars WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, id);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при удалении автомобиля", e);
+        }
     }
 
     private Car mapRow(ResultSet resultSet) throws SQLException {

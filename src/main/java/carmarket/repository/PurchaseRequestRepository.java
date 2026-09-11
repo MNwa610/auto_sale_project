@@ -13,6 +13,36 @@ import java.util.List;
 
 public class PurchaseRequestRepository {
 
+    public PurchaseRequest create(PurchaseRequest request) {
+        String sql = "INSERT INTO purchase_requests (user_id, car_id, message, status) " +
+                "VALUES (?, ?, ?, ?) RETURNING id, created_at, updated_at";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, request.getUserId());
+            statement.setLong(2, request.getCarId());
+            statement.setString(3, request.getMessage());
+            statement.setString(4, request.getStatus().name());
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    request.setId(resultSet.getLong("id"));
+                    if (resultSet.getTimestamp("created_at") != null) {
+                        request.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                    }
+                    if (resultSet.getTimestamp("updated_at") != null) {
+                        request.setUpdatedAt(resultSet.getTimestamp("updated_at").toLocalDateTime());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при создании заявки", e);
+        }
+
+        return request;
+    }
+
     public List<PurchaseRequest> findAll() {
         List<PurchaseRequest> requests = new ArrayList<>();
         String sql = "SELECT id, user_id, car_id, message, status, created_at, updated_at " +
@@ -51,6 +81,38 @@ public class PurchaseRequestRepository {
         }
 
         return null;
+    }
+
+    public boolean update(PurchaseRequest request) {
+        String sql = "UPDATE purchase_requests SET user_id = ?, car_id = ?, message = ?, " +
+                "status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, request.getUserId());
+            statement.setLong(2, request.getCarId());
+            statement.setString(3, request.getMessage());
+            statement.setString(4, request.getStatus().name());
+            statement.setLong(5, request.getId());
+
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при обновлении заявки", e);
+        }
+    }
+
+    public boolean delete(Long id) {
+        String sql = "DELETE FROM purchase_requests WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setLong(1, id);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Ошибка при удалении заявки", e);
+        }
     }
 
     private PurchaseRequest mapRow(ResultSet resultSet) throws SQLException {
