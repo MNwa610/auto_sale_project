@@ -42,7 +42,7 @@ src/main/java/carmarket/
 
 - [x] Этап 1 — инициализация Maven-проекта
 - [x] Этап 2 — схема базы данных PostgreSQL
-- [ ] Этап 3 — модели и enum
+- [x] Этап 3 — модели и enum
 - [ ] Этап 4 — JDBC и Repository
 - [ ] Этап 5 — CRUD
 - [ ] Этап 6 — бизнес-логика
