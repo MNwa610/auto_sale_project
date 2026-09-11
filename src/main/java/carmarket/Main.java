@@ -1,4 +1,4 @@
-package ru.mirea.carmarket;
+package carmarket;
 
 public class Main {
 

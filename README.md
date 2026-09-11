@@ -20,13 +20,13 @@ mvn clean compile
 ## Запуск (этап 1)
 
 ```bash
-java -cp target/classes ru.mirea.carmarket.Main
+java -cp target/classes carmarket.Main
 ```
 
 ## Структура проекта
 
 ```
-src/main/java/ru/mirea/carmarket/
+src/main/java/carmarket/
     Main.java
     model/
     enums/
@@ -41,7 +41,7 @@ src/main/java/ru/mirea/carmarket/
 ## Статус разработки
 
 - [x] Этап 1 — инициализация Maven-проекта
-- [ ] Этап 2 — схема базы данных PostgreSQL
+- [x] Этап 2 — схема базы данных PostgreSQL
 - [ ] Этап 3 — модели и enum
 - [ ] Этап 4 — JDBC и Repository
 - [ ] Этап 5 — CRUD
