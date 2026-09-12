@@ -11,11 +11,34 @@
 - Apache POI
 - JUnit
 
+## PostgreSQL
+
+1. Создай базу `used_cars_marketplace` и выполни SQL-скрипт (таблицы, тестовые данные, индексы) в DBeaver.
+2. Настрой подключение в `src/main/resources/database.properties`:
+
+```properties
+db.url=jdbc:postgresql://localhost:5432/used_cars_marketplace
+db.user=postgres
+db.password=...
+```
+
+При необходимости можно переопределить через переменные окружения: `DB_URL`, `DB_USER`, `DB_PASSWORD`.
+
+**Тестовые логины** (из seed-данных): `admin` / `admin123` (ADMIN), `ivan`, `petr`, `alex`, `dmitry` (пароль `12345`).
+
 ## Сборка
 
 ```bash
 mvn clean compile
 ```
+
+## Тесты
+
+```bash
+mvn test
+```
+
+Интеграционные тесты репозитория (`RepositoryTest`, `CrudRepositoryTest`) требуют запущенный PostgreSQL с заполненной БД. Тесты сервисов работают без БД.
 
 ## Запуск (этап 1)
 

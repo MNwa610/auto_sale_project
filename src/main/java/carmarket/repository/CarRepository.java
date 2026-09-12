@@ -1,6 +1,7 @@
 package carmarket.repository;
 
 import carmarket.enums.CarStatus;
+import carmarket.exception.DatabaseException;
 import carmarket.model.Car;
 import carmarket.util.DatabaseManager;
 
@@ -51,7 +52,7 @@ public class CarRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при создании автомобиля", e);
+            throw new DatabaseException("Ошибка при создании автомобиля", e);
         }
 
         return car;
@@ -71,7 +72,7 @@ public class CarRepository {
                 cars.add(mapRow(resultSet));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при получении списка автомобилей", e);
+            throw new DatabaseException("Ошибка при получении списка автомобилей", e);
         }
 
         return cars;
@@ -93,7 +94,7 @@ public class CarRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при поиске автомобиля по id", e);
+            throw new DatabaseException("Ошибка при поиске автомобиля по id", e);
         }
 
         return null;
@@ -130,7 +131,7 @@ public class CarRepository {
 
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при обновлении автомобиля", e);
+            throw new DatabaseException("Ошибка при обновлении автомобиля", e);
         }
     }
 
@@ -143,7 +144,7 @@ public class CarRepository {
             statement.setLong(1, id);
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при удалении автомобиля", e);
+            throw new DatabaseException("Ошибка при удалении автомобиля", e);
         }
     }
 

@@ -1,6 +1,7 @@
 package carmarket.repository;
 
 import carmarket.enums.RequestStatus;
+import carmarket.exception.DatabaseException;
 import carmarket.model.PurchaseRequest;
 import carmarket.util.DatabaseManager;
 
@@ -37,7 +38,7 @@ public class PurchaseRequestRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при создании заявки", e);
+            throw new DatabaseException("Ошибка при создании заявки", e);
         }
 
         return request;
@@ -56,7 +57,7 @@ public class PurchaseRequestRepository {
                 requests.add(mapRow(resultSet));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при получении списка заявок", e);
+            throw new DatabaseException("Ошибка при получении списка заявок", e);
         }
 
         return requests;
@@ -77,7 +78,7 @@ public class PurchaseRequestRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при поиске заявки по id", e);
+            throw new DatabaseException("Ошибка при поиске заявки по id", e);
         }
 
         return null;
@@ -98,7 +99,7 @@ public class PurchaseRequestRepository {
 
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при обновлении заявки", e);
+            throw new DatabaseException("Ошибка при обновлении заявки", e);
         }
     }
 
@@ -111,7 +112,7 @@ public class PurchaseRequestRepository {
             statement.setLong(1, id);
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при удалении заявки", e);
+            throw new DatabaseException("Ошибка при удалении заявки", e);
         }
     }
 

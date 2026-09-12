@@ -1,6 +1,7 @@
 package carmarket.repository;
 
 import carmarket.enums.UserRole;
+import carmarket.exception.DatabaseException;
 import carmarket.model.User;
 import carmarket.util.DatabaseManager;
 
@@ -34,7 +35,7 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при создании пользователя", e);
+            throw new DatabaseException("Ошибка при создании пользователя", e);
         }
 
         return user;
@@ -53,7 +54,7 @@ public class UserRepository {
                 users.add(mapRow(resultSet));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при получении списка пользователей", e);
+            throw new DatabaseException("Ошибка при получении списка пользователей", e);
         }
 
         return users;
@@ -74,7 +75,7 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при поиске пользователя по id", e);
+            throw new DatabaseException("Ошибка при поиске пользователя по id", e);
         }
 
         return null;
@@ -95,7 +96,7 @@ public class UserRepository {
 
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при обновлении пользователя", e);
+            throw new DatabaseException("Ошибка при обновлении пользователя", e);
         }
     }
 
@@ -108,7 +109,7 @@ public class UserRepository {
             statement.setLong(1, id);
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка при удалении пользователя", e);
+            throw new DatabaseException("Ошибка при удалении пользователя", e);
         }
     }
 
