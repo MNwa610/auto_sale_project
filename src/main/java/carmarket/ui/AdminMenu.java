@@ -5,10 +5,14 @@ import carmarket.model.Car;
 import carmarket.model.PurchaseRequest;
 import carmarket.model.User;
 import carmarket.service.CarService;
+import carmarket.service.DataExportService;
 import carmarket.service.PurchaseRequestService;
+import carmarket.service.StatisticsService;
+import carmarket.service.SystemStatistics;
 import carmarket.service.UserService;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.util.List;
 
 public class AdminMenu {
@@ -17,6 +21,8 @@ public class AdminMenu {
     private final CarService carService;
     private final PurchaseRequestService requestService;
     private final InputHelper inputHelper;
+    private final StatisticsService statisticsService;
+    private final DataExportService dataExportService;
 
     public AdminMenu(UserService userService,
                      CarService carService,
@@ -26,6 +32,8 @@ public class AdminMenu {
         this.carService = carService;
         this.requestService = requestService;
         this.inputHelper = inputHelper;
+        this.statisticsService = new StatisticsService();
+        this.dataExportService = new DataExportService();
     }
 
     public void show() {
@@ -43,12 +51,8 @@ public class AdminMenu {
                     case 4 -> searchMenu();
                     case 5 -> filterMenu();
                     case 6 -> sortMenu();
-                    case 7 -> System.out.println(
-                            "Статистика будет добавлена на этапе 10."
-                    );
-                    case 8 -> System.out.println(
-                            "Экспорт будет добавлен на этапе 11."
-                    );
+                        case 7 -> statisticsMenu();
+                        case 8 -> exportMenu();
                     case 9 -> databaseTablesMenu();
 
                     case 10 -> running = false;
@@ -242,6 +246,45 @@ public class AdminMenu {
                 default -> System.out.println("Ошибка: такого пункта нет.");
             }
         }
+    }
+
+    private void statisticsMenu() {
+        SystemStatistics statistics = statisticsService.calculate(
+                userService.findAll(),
+                carService.findAll(),
+                requestService.findAll()
+        );
+
+        System.out.println();
+        System.out.println("--- СТАТИСТИКА СИСТЕМЫ ---");
+        System.out.println("Всего пользователей: " + statistics.totalUsers());
+        System.out.println("Всего автомобилей: " + statistics.totalCars());
+        System.out.println("Доступных автомобилей: " + statistics.availableCars());
+        System.out.println("Проданных автомобилей: " + statistics.soldCars());
+        System.out.println("Всего заявок: " + statistics.totalRequests());
+        System.out.println("Активных заявок: " + statistics.activeRequests());
+        System.out.println("Завершенных заявок: " + statistics.completedRequests());
+        System.out.println("Отмененных заявок: " + statistics.cancelledRequests());
+    }
+
+    private void exportMenu() {
+        String fileName = inputHelper.readString(
+                "Путь к Excel-файлу (по умолчанию export.xlsx): "
+        );
+        if (fileName.isBlank()) {
+            fileName = "export.xlsx";
+        }
+        if (!fileName.toLowerCase().endsWith(".xlsx")) {
+            fileName += ".xlsx";
+        }
+
+        dataExportService.exportToExcel(
+                Path.of(fileName),
+                userService.findAll(),
+                carService.findAll(),
+                requestService.findAll()
+        );
+        System.out.println("Данные экспортированы в файл: " + Path.of(fileName).toAbsolutePath());
     }
 
     private RequestStatus readRequestStatus() {
