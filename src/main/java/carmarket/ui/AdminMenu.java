@@ -49,9 +49,8 @@ public class AdminMenu {
                     case 8 -> System.out.println(
                             "Экспорт будет добавлен на этапе 11."
                     );
-                    case 9 -> System.out.println(
-                            "Вывод таблиц будет добавлен на этапе 12."
-                    );
+                    case 9 -> databaseTablesMenu();
+
                     case 10 -> running = false;
                     default -> System.out.println("Ошибка: такого пункта меню нет.");
                 }
@@ -219,6 +218,29 @@ public class AdminMenu {
             printCars(carService.sortByMileage(ascending));
         } else {
             System.out.println("Ошибка: такого пункта нет.");
+        }
+    }
+
+    private void databaseTablesMenu() {
+        boolean running = true;
+
+        while (running) {
+            System.out.println();
+            System.out.println("--- ТАБЛИЦЫ БД ---");
+            System.out.println("1. Users");
+            System.out.println("2. Cars");
+            System.out.println("3. PurchaseRequests");
+            System.out.println("4. Назад");
+
+            int choice = inputHelper.readInt("Выберите пункт: ");
+
+            switch (choice) {
+                case 1 -> printUsers(userService.findAll());
+                case 2 -> printCars(carService.findAll());
+                case 3 -> printRequests(requestService.findAll());
+                case 4 -> running = false;
+                default -> System.out.println("Ошибка: такого пункта нет.");
+            }
         }
     }
 
