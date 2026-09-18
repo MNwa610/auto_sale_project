@@ -1,0 +1,259 @@
+package carmarket.ui;
+
+import carmarket.enums.RequestStatus;
+import carmarket.model.Car;
+import carmarket.model.PurchaseRequest;
+import carmarket.model.User;
+import carmarket.service.CarService;
+import carmarket.service.PurchaseRequestService;
+import carmarket.service.UserService;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public class AdminMenu {
+
+    private final UserService userService;
+    private final CarService carService;
+    private final PurchaseRequestService requestService;
+    private final InputHelper inputHelper;
+
+    public AdminMenu(UserService userService,
+                     CarService carService,
+                     PurchaseRequestService requestService,
+                     InputHelper inputHelper) {
+        this.userService = userService;
+        this.carService = carService;
+        this.requestService = requestService;
+        this.inputHelper = inputHelper;
+    }
+
+    public void show() {
+        boolean running = true;
+
+        while (running) {
+            printMenu();
+
+            int choice = inputHelper.readInt("Выберите пункт: ");
+
+            switch (choice) {
+                case 1 -> usersMenu();
+                case 2 -> carsMenu();
+                case 3 -> requestsMenu();
+                case 4 -> searchMenu();
+                case 5 -> filterMenu();
+                case 6 -> sortMenu();
+                case 7 -> System.out.println(
+                        "Статистика будет добавлена на этапе 10."
+                );
+                case 8 -> System.out.println(
+                        "Экспорт будет добавлен на этапе 11."
+                );
+                case 9 -> System.out.println(
+                        "Вывод таблиц будет добавлен на этапе 12."
+                );
+                case 10 -> running = false;
+                default -> System.out.println("Такого пункта нет.");
+            }
+        }
+    }
+
+    private void printMenu() {
+        System.out.println();
+        System.out.println("================================================");
+        System.out.println("       МАРКЕТПЛЕЙС АВТОМОБИЛЕЙ С ПРОБЕГОМ");
+        System.out.println("================================================");
+        System.out.println("1. Пользователи");
+        System.out.println("2. Автомобили");
+        System.out.println("3. Заявки");
+        System.out.println("4. Поиск");
+        System.out.println("5. Фильтрация");
+        System.out.println("6. Сортировка");
+        System.out.println("7. Статистика");
+        System.out.println("8. Экспорт");
+        System.out.println("9. Таблицы БД");
+        System.out.println("10. Выйти");
+    }
+
+    private void usersMenu() {
+        System.out.println();
+        System.out.println("--- ПОЛЬЗОВАТЕЛИ ---");
+        System.out.println("1. Показать всех");
+        System.out.println("2. Найти по ID");
+        System.out.println("3. Назад");
+
+        int choice = inputHelper.readInt("Выберите пункт: ");
+
+        switch (choice) {
+            case 1 -> printUsers(userService.findAll());
+            case 2 -> {
+                long id = inputHelper.readLong("Введите ID пользователя: ");
+                System.out.println(userService.findById(id));
+            }
+            case 3 -> {
+            }
+            default -> System.out.println("Такого пункта нет.");
+        }
+    }
+
+    private void carsMenu() {
+        System.out.println();
+        System.out.println("--- АВТОМОБИЛИ ---");
+        System.out.println("1. Показать все");
+        System.out.println("2. Найти по ID");
+        System.out.println("3. Назад");
+
+        int choice = inputHelper.readInt("Выберите пункт: ");
+
+        switch (choice) {
+            case 1 -> printCars(carService.findAll());
+            case 2 -> {
+                long id = inputHelper.readLong("Введите ID автомобиля: ");
+                System.out.println(carService.findById(id));
+            }
+            case 3 -> {
+            }
+            default -> System.out.println("Такого пункта нет.");
+        }
+    }
+
+    private void requestsMenu() {
+        System.out.println();
+        System.out.println("--- ЗАЯВКИ ---");
+        System.out.println("1. Показать все");
+        System.out.println("2. Найти по ID");
+        System.out.println("3. Изменить статус");
+        System.out.println("4. Назад");
+
+        int choice = inputHelper.readInt("Выберите пункт: ");
+
+        switch (choice) {
+            case 1 -> printRequests(requestService.findAll());
+            case 2 -> {
+                long id = inputHelper.readLong("Введите ID заявки: ");
+                System.out.println(requestService.findById(id));
+            }
+            case 3 -> changeRequestStatus();
+            case 4 -> {
+            }
+            default -> System.out.println("Такого пункта нет.");
+        }
+    }
+
+    private void changeRequestStatus() {
+        long id = inputHelper.readLong("Введите ID заявки: ");
+        RequestStatus status = readRequestStatus();
+
+        PurchaseRequest request = requestService.findById(id);
+        request.setStatus(status);
+        requestService.update(request);
+
+        System.out.println("Статус заявки изменён.");
+    }
+
+    private void searchMenu() {
+        System.out.println();
+        System.out.println("1. Поиск автомобиля по марке/модели");
+        System.out.println("2. Поиск заявок по имени пользователя");
+
+        int choice = inputHelper.readInt("Выберите пункт: ");
+
+        if (choice == 1) {
+            String query = inputHelper.readString("Введите марку или модель: ");
+            printCars(carService.search(query));
+        } else if (choice == 2) {
+            String query = inputHelper.readString("Введите имя пользователя: ");
+            printRequests(requestService.searchByUserName(query));
+        } else {
+            System.out.println("Такого пункта нет.");
+        }
+    }
+
+    private void filterMenu() {
+        System.out.println();
+        System.out.println("1. Заявки по статусу");
+        System.out.println("2. Автомобили по диапазону цены");
+
+        int choice = inputHelper.readInt("Выберите пункт: ");
+
+        if (choice == 1) {
+            RequestStatus status = readRequestStatus();
+            printRequests(requestService.filterByStatus(status));
+        } else if (choice == 2) {
+            double min = inputHelper.readDouble("Минимальная цена: ");
+            double max = inputHelper.readDouble("Максимальная цена: ");
+
+            printCars(
+                    carService.filterByPrice(
+                            BigDecimal.valueOf(min),
+                            BigDecimal.valueOf(max)
+                    )
+            );
+        } else {
+            System.out.println("Такого пункта нет.");
+        }
+    }
+
+    private void sortMenu() {
+        System.out.println();
+        System.out.println("1. По цене");
+        System.out.println("2. По пробегу");
+
+        int choice = inputHelper.readInt("Выберите пункт: ");
+
+        System.out.println("1. По возрастанию");
+        System.out.println("2. По убыванию");
+
+        int order = inputHelper.readInt("Выберите порядок: ");
+        boolean ascending = order == 1;
+
+        if (choice == 1) {
+            printCars(carService.sortByPrice(ascending));
+        } else if (choice == 2) {
+            printCars(carService.sortByMileage(ascending));
+        } else {
+            System.out.println("Такого пункта нет.");
+        }
+    }
+
+    private RequestStatus readRequestStatus() {
+        String value = inputHelper.readString(
+                "Статус (NEW, IN_PROGRESS, APPROVED, REJECTED, CANCELLED): "
+        );
+
+        return RequestStatus.valueOf(value.toUpperCase());
+    }
+
+    private void printUsers(List<User> users) {
+        if (users.isEmpty()) {
+            System.out.println("Пользователи не найдены.");
+            return;
+        }
+
+        for (User user : users) {
+            System.out.println(user);
+        }
+    }
+
+    private void printCars(List<Car> cars) {
+        if (cars.isEmpty()) {
+            System.out.println("Автомобили не найдены.");
+            return;
+        }
+
+        for (Car car : cars) {
+            System.out.println(car);
+        }
+    }
+
+    private void printRequests(List<PurchaseRequest> requests) {
+        if (requests.isEmpty()) {
+            System.out.println("Заявки не найдены.");
+            return;
+        }
+
+        for (PurchaseRequest request : requests) {
+            System.out.println(request);
+        }
+    }
+}

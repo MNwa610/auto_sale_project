@@ -1,8 +1,10 @@
 package carmarket;
 
+import carmarket.ui.ConsoleMenu;
+
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Маркетплейс автомобилей с пробегом");
+        new ConsoleMenu().start();
     }
 }
