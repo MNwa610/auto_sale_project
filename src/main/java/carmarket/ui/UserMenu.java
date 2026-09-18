@@ -28,18 +28,21 @@ public class UserMenu {
 
         while (running) {
             printMenu();
-
             int choice = inputHelper.readInt("Выберите пункт: ");
 
-            switch (choice) {
-                case 1 -> printCars(carService.findAll());
-                case 2 -> searchCar();
-                case 3 -> showCarById();
-                case 4 -> createRequest(currentUser);
-                case 5 -> showMyRequests(currentUser);
-                case 6 -> System.out.println(currentUser);
-                case 7 -> running = false;
-                default -> System.out.println("Такого пункта нет.");
+            try {
+                switch (choice) {
+                    case 1 -> printCars(carService.findAll());
+                    case 2 -> searchCar();
+                    case 3 -> showCarById();
+                    case 4 -> createRequest(currentUser);
+                    case 5 -> showMyRequests(currentUser);
+                    case 6 -> System.out.println(currentUser);
+                    case 7 -> running = false;
+                    default -> System.out.println("Ошибка: такого пункта меню нет.");
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Ошибка: " + e.getMessage());
             }
         }
     }
@@ -62,13 +65,13 @@ public class UserMenu {
     }
 
     private void showCarById() {
-        long id = inputHelper.readLong("Введите ID автомобиля: ");
+        long id = inputHelper.readPositiveLong("Введите ID автомобиля: ");
         System.out.println(carService.findById(id));
     }
 
     private void createRequest(User currentUser) {
-        long carId = inputHelper.readLong("Введите ID автомобиля: ");
-        String message = inputHelper.readString("Сообщение продавцу: ");
+        long carId = inputHelper.readPositiveLong("Введите ID автомобиля: ");
+        String message = inputHelper.readOptionalString("Сообщение продавцу: ");
 
         PurchaseRequest request = new PurchaseRequest(
                 currentUser.getId(),

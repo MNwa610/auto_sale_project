@@ -33,27 +33,30 @@ public class AdminMenu {
 
         while (running) {
             printMenu();
-
             int choice = inputHelper.readInt("Выберите пункт: ");
 
-            switch (choice) {
-                case 1 -> usersMenu();
-                case 2 -> carsMenu();
-                case 3 -> requestsMenu();
-                case 4 -> searchMenu();
-                case 5 -> filterMenu();
-                case 6 -> sortMenu();
-                case 7 -> System.out.println(
-                        "Статистика будет добавлена на этапе 10."
-                );
-                case 8 -> System.out.println(
-                        "Экспорт будет добавлен на этапе 11."
-                );
-                case 9 -> System.out.println(
-                        "Вывод таблиц будет добавлен на этапе 12."
-                );
-                case 10 -> running = false;
-                default -> System.out.println("Такого пункта нет.");
+            try {
+                switch (choice) {
+                    case 1 -> usersMenu();
+                    case 2 -> carsMenu();
+                    case 3 -> requestsMenu();
+                    case 4 -> searchMenu();
+                    case 5 -> filterMenu();
+                    case 6 -> sortMenu();
+                    case 7 -> System.out.println(
+                            "Статистика будет добавлена на этапе 10."
+                    );
+                    case 8 -> System.out.println(
+                            "Экспорт будет добавлен на этапе 11."
+                    );
+                    case 9 -> System.out.println(
+                            "Вывод таблиц будет добавлен на этапе 12."
+                    );
+                    case 10 -> running = false;
+                    default -> System.out.println("Ошибка: такого пункта меню нет.");
+                }
+            } catch (RuntimeException e) {
+                System.out.println("Ошибка: " + e.getMessage());
             }
         }
     }
@@ -87,12 +90,12 @@ public class AdminMenu {
         switch (choice) {
             case 1 -> printUsers(userService.findAll());
             case 2 -> {
-                long id = inputHelper.readLong("Введите ID пользователя: ");
+                long id = inputHelper.readPositiveLong("Введите ID пользователя: ");
                 System.out.println(userService.findById(id));
             }
             case 3 -> {
             }
-            default -> System.out.println("Такого пункта нет.");
+            default -> System.out.println("Ошибка: такого пункта нет.");
         }
     }
 
@@ -108,12 +111,12 @@ public class AdminMenu {
         switch (choice) {
             case 1 -> printCars(carService.findAll());
             case 2 -> {
-                long id = inputHelper.readLong("Введите ID автомобиля: ");
+                long id = inputHelper.readPositiveLong("Введите ID автомобиля: ");
                 System.out.println(carService.findById(id));
             }
             case 3 -> {
             }
-            default -> System.out.println("Такого пункта нет.");
+            default -> System.out.println("Ошибка: такого пункта нет.");
         }
     }
 
@@ -130,18 +133,18 @@ public class AdminMenu {
         switch (choice) {
             case 1 -> printRequests(requestService.findAll());
             case 2 -> {
-                long id = inputHelper.readLong("Введите ID заявки: ");
+                long id = inputHelper.readPositiveLong("Введите ID заявки: ");
                 System.out.println(requestService.findById(id));
             }
             case 3 -> changeRequestStatus();
             case 4 -> {
             }
-            default -> System.out.println("Такого пункта нет.");
+            default -> System.out.println("Ошибка: такого пункта нет.");
         }
     }
 
     private void changeRequestStatus() {
-        long id = inputHelper.readLong("Введите ID заявки: ");
+        long id = inputHelper.readPositiveLong("Введите ID заявки: ");
         RequestStatus status = readRequestStatus();
 
         PurchaseRequest request = requestService.findById(id);
@@ -165,7 +168,7 @@ public class AdminMenu {
             String query = inputHelper.readString("Введите имя пользователя: ");
             printRequests(requestService.searchByUserName(query));
         } else {
-            System.out.println("Такого пункта нет.");
+            System.out.println("Ошибка: такого пункта нет.");
         }
     }
 
@@ -180,17 +183,14 @@ public class AdminMenu {
             RequestStatus status = readRequestStatus();
             printRequests(requestService.filterByStatus(status));
         } else if (choice == 2) {
-            double min = inputHelper.readDouble("Минимальная цена: ");
-            double max = inputHelper.readDouble("Максимальная цена: ");
+            BigDecimal min =
+                    inputHelper.readNonNegativePrice("Минимальная цена: ");
+            BigDecimal max =
+                    inputHelper.readNonNegativePrice("Максимальная цена: ");
 
-            printCars(
-                    carService.filterByPrice(
-                            BigDecimal.valueOf(min),
-                            BigDecimal.valueOf(max)
-                    )
-            );
+            printCars(carService.filterByPrice(min, max));
         } else {
-            System.out.println("Такого пункта нет.");
+            System.out.println("Ошибка: такого пункта нет.");
         }
     }
 
@@ -205,6 +205,12 @@ public class AdminMenu {
         System.out.println("2. По убыванию");
 
         int order = inputHelper.readInt("Выберите порядок: ");
+
+        if (order != 1 && order != 2) {
+            System.out.println("Ошибка: такого порядка сортировки нет.");
+            return;
+        }
+
         boolean ascending = order == 1;
 
         if (choice == 1) {
@@ -212,16 +218,22 @@ public class AdminMenu {
         } else if (choice == 2) {
             printCars(carService.sortByMileage(ascending));
         } else {
-            System.out.println("Такого пункта нет.");
+            System.out.println("Ошибка: такого пункта нет.");
         }
     }
 
     private RequestStatus readRequestStatus() {
-        String value = inputHelper.readString(
-                "Статус (NEW, IN_PROGRESS, APPROVED, REJECTED, CANCELLED): "
-        );
+        while (true) {
+            String value = inputHelper.readString(
+                    "Статус (NEW, IN_PROGRESS, APPROVED, REJECTED, CANCELLED): "
+            );
 
-        return RequestStatus.valueOf(value.toUpperCase());
+            try {
+                return RequestStatus.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Ошибка: неизвестный статус.");
+            }
+        }
     }
 
     private void printUsers(List<User> users) {

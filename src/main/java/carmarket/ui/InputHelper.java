@@ -1,5 +1,6 @@
 package carmarket.ui;
 
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 public class InputHelper {
@@ -41,6 +42,30 @@ public class InputHelper {
         }
     }
 
+    public int readNonNegativeInt(String message) {
+        while (true) {
+            int value = readInt(message);
+
+            if (value >= 0) {
+                return value;
+            }
+
+            System.out.println("Ошибка: значение не может быть отрицательным.");
+        }
+    }
+
+    public int readMileage(String message) {
+        while (true) {
+            int mileage = readInt(message);
+
+            if (mileage >= 0) {
+                return mileage;
+            }
+
+            System.out.println("Ошибка: пробег не может быть отрицательным.");
+        }
+    }
+
     public long readLong(String message) {
         while (true) {
             System.out.print(message);
@@ -54,6 +79,18 @@ public class InputHelper {
         }
     }
 
+    public long readPositiveLong(String message) {
+        while (true) {
+            long value = readLong(message);
+
+            if (value > 0) {
+                return value;
+            }
+
+            System.out.println("Ошибка: ID должен быть положительным числом.");
+        }
+    }
+
     public double readDouble(String message) {
         while (true) {
             System.out.print(message);
@@ -64,6 +101,30 @@ public class InputHelper {
             } catch (NumberFormatException e) {
                 System.out.println("Ошибка: нужно ввести число.");
             }
+        }
+    }
+
+    public BigDecimal readNonNegativePrice(String message) {
+        while (true) {
+            double value = readDouble(message);
+
+            if (value >= 0) {
+                return BigDecimal.valueOf(value);
+            }
+
+            System.out.println("Ошибка: цена не может быть отрицательной.");
+        }
+    }
+
+    public BigDecimal readPositivePrice(String message) {
+        while (true) {
+            double value = readDouble(message);
+
+            if (value > 0) {
+                return BigDecimal.valueOf(value);
+            }
+
+            System.out.println("Ошибка: цена должна быть больше 0.");
         }
     }
 }

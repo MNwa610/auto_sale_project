@@ -38,17 +38,20 @@ public class ConsoleMenu {
 
         while (running) {
             printStartMenu();
-
             int choice = inputHelper.readInt("Выберите пункт: ");
 
-            switch (choice) {
-                case 1 -> login();
-                case 2 -> register();
-                case 3 -> {
-                    running = false;
-                    System.out.println("Работа программы завершена.");
+            try {
+                switch (choice) {
+                    case 1 -> login();
+                    case 2 -> register();
+                    case 3 -> {
+                        running = false;
+                        System.out.println("Работа программы завершена.");
+                    }
+                    default -> System.out.println("Ошибка: такого пункта меню нет.");
                 }
-                default -> System.out.println("Такого пункта нет.");
+            } catch (RuntimeException e) {
+                System.out.println("Ошибка: " + e.getMessage());
             }
         }
     }
