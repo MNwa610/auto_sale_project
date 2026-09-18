@@ -11,10 +11,10 @@ import carmarket.repository.CarRepository;
 import carmarket.repository.PurchaseRequestRepository;
 import carmarket.repository.UserRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PurchaseRequestService {
-
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final UserRepository userRepository;
     private final CarRepository carRepository;
@@ -36,11 +36,15 @@ public class PurchaseRequestService {
         Car car = validateCarForRequest(request.getCarId());
 
         if (car.getStatus() == CarStatus.SOLD || car.getStatus() == CarStatus.ARCHIVED) {
-            throw new BusinessException("Нельзя создать заявку на автомобиль со статусом " + car.getStatus());
+            throw new BusinessException(
+                    "Нельзя создать заявку на автомобиль со статусом " + car.getStatus()
+            );
         }
 
         if (hasActiveRequest(request.getUserId(), request.getCarId(), null)) {
-            throw new BusinessException("У пользователя уже есть активная заявка на этот автомобиль");
+            throw new BusinessException(
+                    "У пользователя уже есть активная заявка на этот автомобиль"
+            );
         }
 
         if (request.getStatus() == null) {
@@ -65,7 +69,9 @@ public class PurchaseRequestService {
     public PurchaseRequest update(PurchaseRequest request) {
         PurchaseRequest existing = purchaseRequestRepository.findById(request.getId());
         if (existing == null) {
-            throw new EntityNotFoundException("Заявка с id=" + request.getId() + " не найдена");
+            throw new EntityNotFoundException(
+                    "Заявка с id=" + request.getId() + " не найдена"
+            );
         }
 
         validateUserExists(request.getUserId());
@@ -77,11 +83,23 @@ public class PurchaseRequestService {
 
         if (!request.getUserId().equals(existing.getUserId())
                 || !request.getCarId().equals(existing.getCarId())) {
-            if (car.getStatus() == CarStatus.SOLD || car.getStatus() == CarStatus.ARCHIVED) {
-                throw new BusinessException("Нельзя привязать заявку к автомобилю со статусом " + car.getStatus());
+
+            if (car.getStatus() == CarStatus.SOLD
+                    || car.getStatus() == CarStatus.ARCHIVED) {
+                throw new BusinessException(
+                        "Нельзя привязать заявку к автомобилю со статусом "
+                                + car.getStatus()
+                );
             }
-            if (hasActiveRequest(request.getUserId(), request.getCarId(), request.getId())) {
-                throw new BusinessException("У пользователя уже есть активная заявка на этот автомобиль");
+
+            if (hasActiveRequest(
+                    request.getUserId(),
+                    request.getCarId(),
+                    request.getId()
+            )) {
+                throw new BusinessException(
+                        "У пользователя уже есть активная заявка на этот автомобиль"
+                );
             }
         }
 
@@ -98,46 +116,90 @@ public class PurchaseRequestService {
     public List<PurchaseRequest> findByUserId(Long userId) {
         validateUserExists(userId);
 
-        List<PurchaseRequest> result = new java.util.ArrayList<>();
+        List<PurchaseRequest> result = new ArrayList<>();
+
         for (PurchaseRequest request : purchaseRequestRepository.findAll()) {
             if (request.getUserId().equals(userId)) {
                 result.add(request);
             }
         }
+
+        return result;
+    }
+
+    public List<PurchaseRequest> searchByUserName(String query) {
+        List<PurchaseRequest> result = new ArrayList<>();
+
+        if (query == null || query.isBlank()) {
+            return result;
+        }
+
+        String searchText = query.trim().toLowerCase();
+
+        for (PurchaseRequest request : purchaseRequestRepository.findAll()) {
+            User user = userRepository.findById(request.getUserId());
+
+            if (user != null
+                    && user.getFullName() != null
+                    && user.getFullName().toLowerCase().contains(searchText)) {
+                result.add(request);
+            }
+        }
+
+        return result;
+    }
+
+    public List<PurchaseRequest> filterByStatus(RequestStatus status) {
+        List<PurchaseRequest> result = new ArrayList<>();
+
+        for (PurchaseRequest request : purchaseRequestRepository.findAll()) {
+            if (request.getStatus() == status) {
+                result.add(request);
+            }
+        }
+
         return result;
     }
 
     private void validateUserExists(Long userId) {
         User user = userRepository.findById(userId);
         if (user == null) {
-            throw new EntityNotFoundException("Пользователь с id=" + userId + " не найден");
+            throw new EntityNotFoundException(
+                    "Пользователь с id=" + userId + " не найден"
+            );
         }
     }
 
     private Car validateCarForRequest(Long carId) {
         Car car = carRepository.findById(carId);
         if (car == null) {
-            throw new EntityNotFoundException("Автомобиль с id=" + carId + " не найден");
+            throw new EntityNotFoundException(
+                    "Автомобиль с id=" + carId + " не найден"
+            );
         }
         return car;
     }
 
     private boolean hasActiveRequest(Long userId, Long carId, Long excludeRequestId) {
         for (PurchaseRequest request : purchaseRequestRepository.findAll()) {
-            if (excludeRequestId != null && excludeRequestId.equals(request.getId())) {
+            if (excludeRequestId != null
+                    && excludeRequestId.equals(request.getId())) {
                 continue;
             }
+
             if (request.getUserId().equals(userId)
                     && request.getCarId().equals(carId)
                     && isActiveStatus(request.getStatus())) {
                 return true;
             }
         }
+
         return false;
     }
 
     private boolean isActiveStatus(RequestStatus status) {
-        return status == RequestStatus.NEW || status == RequestStatus.IN_PROGRESS;
+        return status == RequestStatus.NEW
+                || status == RequestStatus.IN_PROGRESS;
     }
 
     private void validateStatusTransition(RequestStatus from, RequestStatus to) {
@@ -148,7 +210,8 @@ public class PurchaseRequestService {
         boolean allowed = false;
 
         if (from == RequestStatus.NEW) {
-            allowed = to == RequestStatus.IN_PROGRESS || to == RequestStatus.CANCELLED;
+            allowed = to == RequestStatus.IN_PROGRESS
+                    || to == RequestStatus.CANCELLED;
         } else if (from == RequestStatus.IN_PROGRESS) {
             allowed = to == RequestStatus.APPROVED
                     || to == RequestStatus.REJECTED
@@ -156,7 +219,9 @@ public class PurchaseRequestService {
         }
 
         if (!allowed) {
-            throw new BusinessException("Недопустимый переход статуса: " + from + " -> " + to);
+            throw new BusinessException(
+                    "Недопустимый переход статуса: " + from + " -> " + to
+            );
         }
     }
 }
