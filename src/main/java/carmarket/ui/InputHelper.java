@@ -127,4 +127,10 @@ public class InputHelper {
             System.out.println("Ошибка: цена должна быть больше 0.");
         }
     }
+
+    public void pause() {
+        System.out.print("Нажмите Enter, чтобы продолжить...");
+        scanner.nextLine();
+        System.out.println();
+    }
 }

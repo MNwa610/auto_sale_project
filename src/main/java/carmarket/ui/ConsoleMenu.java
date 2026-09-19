@@ -46,33 +46,31 @@ public class ConsoleMenu {
                     case 2 -> register();
                     case 3 -> {
                         running = false;
-                        System.out.println("Работа программы завершена.");
+                        ConsoleView.printSuccess("Работа программы завершена.");
                     }
-                    default -> System.out.println("Ошибка: такого пункта меню нет.");
+                    default -> ConsoleView.printError("Такого пункта меню нет.");
                 }
             } catch (RuntimeException e) {
-                System.out.println("Ошибка: " + e.getMessage());
+                ConsoleView.printError(e.getMessage());
             }
         }
     }
 
     private void printStartMenu() {
-        System.out.println();
-        System.out.println("===============================================");
-        System.out.println("  МАРКЕТПЛЕЙС АВТОМОБИЛЕЙ С ПРОБЕГОМ");
-        System.out.println("===============================================");
-        System.out.println("1. Войти");
-        System.out.println("2. Зарегистрироваться");
-        System.out.println("3. Выход");
+        ConsoleView.printFrameTitle("МАРКЕТПЛЕЙС АВТОМОБИЛЕЙ С ПРОБЕГОМ");
+        ConsoleView.printMenuOption(1, "Войти");
+        ConsoleView.printMenuOption(2, "Зарегистрироваться");
+        ConsoleView.printMenuOption(3, "Выход");
     }
 
     private void login() {
-        String login = inputHelper.readString("Логин: ");
-        String password = inputHelper.readString("Пароль: ");
+        ConsoleView.printSection("Вход в систему");
+        String login = inputHelper.readString("  Логин: ");
+        String password = inputHelper.readString("  Пароль: ");
 
         User user = userService.authenticate(login, password);
 
-        System.out.println("Вход выполнен: " + user.getFullName());
+        ConsoleView.printSuccess("Добро пожаловать, " + user.getFullName() + "!");
 
         if (user.getRole() == UserRole.ADMIN) {
             adminMenu.show();
@@ -82,13 +80,15 @@ public class ConsoleMenu {
     }
 
     private void register() {
-        String fullName = inputHelper.readString("ФИО: ");
-        String login = inputHelper.readString("Логин: ");
-        String password = inputHelper.readString("Пароль: ");
+        ConsoleView.printSection("Регистрация");
+        String fullName = inputHelper.readString("  ФИО: ");
+        String login = inputHelper.readString("  Логин: ");
+        String password = inputHelper.readString("  Пароль: ");
 
         User user = userService.register(fullName, login, password);
 
-        System.out.println("Регистрация выполнена.");
-        System.out.println("ID пользователя: " + user.getId());
+        ConsoleView.printSuccess("Регистрация выполнена.");
+        ConsoleView.printMessage("ID пользователя: " + user.getId());
+        inputHelper.pause();
     }
 }
