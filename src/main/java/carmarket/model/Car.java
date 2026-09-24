@@ -5,11 +5,6 @@ import carmarket.enums.CarStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Представление объявления для UI и сервисов.
- * В БД (3НФ) марка и модель хранятся в brands/car_models,
- * характеристики — в car_specifications.
- */
 public class Car {
 
     private Long id;
