@@ -14,25 +14,48 @@ import java.util.List;
 
 public class UserRepository {
 
+    private static final String USER_SELECT =
+            "SELECT u.id, u.full_name, u.created_at, r.code AS role, " +
+                    "c.login, c.password_hash " +
+                    "FROM users u " +
+                    "JOIN roles r ON r.id = u.role_id " +
+                    "JOIN user_credentials c ON c.user_id = u.id";
+
     public User create(User user) {
-        String sql = "INSERT INTO users (full_name, login, password_hash, role) " +
-                "VALUES (?, ?, ?, ?) RETURNING id, created_at";
+        try (Connection connection = DatabaseManager.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                long roleId = findRoleId(connection, user.getRole().name());
 
-        try (Connection connection = DatabaseManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+                String userSql = "INSERT INTO users (full_name, role_id) VALUES (?, ?) RETURNING id, created_at";
+                try (PreparedStatement statement = connection.prepareStatement(userSql)) {
+                    statement.setString(1, user.getFullName());
+                    statement.setLong(2, roleId);
 
-            statement.setString(1, user.getFullName());
-            statement.setString(2, user.getLogin());
-            statement.setString(3, user.getPasswordHash());
-            statement.setString(4, user.getRole().name());
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    user.setId(resultSet.getLong("id"));
-                    if (resultSet.getTimestamp("created_at") != null) {
-                        user.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                    try (ResultSet resultSet = statement.executeQuery()) {
+                        if (resultSet.next()) {
+                            user.setId(resultSet.getLong("id"));
+                            if (resultSet.getTimestamp("created_at") != null) {
+                                user.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                            }
+                        }
                     }
                 }
+
+                String credentialsSql = "INSERT INTO user_credentials (user_id, login, password_hash) VALUES (?, ?, ?)";
+                try (PreparedStatement statement = connection.prepareStatement(credentialsSql)) {
+                    statement.setLong(1, user.getId());
+                    statement.setString(2, user.getLogin());
+                    statement.setString(3, user.getPasswordHash());
+                    statement.executeUpdate();
+                }
+
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
             throw new DatabaseException("Ошибка при создании пользователя", e);
@@ -43,8 +66,7 @@ public class UserRepository {
 
     public List<User> findAll() {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT id, full_name, login, password_hash, role, created_at " +
-                "FROM users ORDER BY id";
+        String sql = USER_SELECT + " ORDER BY u.id";
 
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -61,8 +83,7 @@ public class UserRepository {
     }
 
     public User findById(Long id) {
-        String sql = "SELECT id, full_name, login, password_hash, role, created_at " +
-                "FROM users WHERE id = ?";
+        String sql = USER_SELECT + " WHERE u.id = ?";
 
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -82,19 +103,38 @@ public class UserRepository {
     }
 
     public boolean update(User user) {
-        String sql = "UPDATE users SET full_name = ?, login = ?, password_hash = ?, role = ? " +
-                "WHERE id = ?";
+        try (Connection connection = DatabaseManager.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                long roleId = findRoleId(connection, user.getRole().name());
 
-        try (Connection connection = DatabaseManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+                String userSql = "UPDATE users SET full_name = ?, role_id = ? WHERE id = ?";
+                int updated;
+                try (PreparedStatement statement = connection.prepareStatement(userSql)) {
+                    statement.setString(1, user.getFullName());
+                    statement.setLong(2, roleId);
+                    statement.setLong(3, user.getId());
+                    updated = statement.executeUpdate();
+                }
 
-            statement.setString(1, user.getFullName());
-            statement.setString(2, user.getLogin());
-            statement.setString(3, user.getPasswordHash());
-            statement.setString(4, user.getRole().name());
-            statement.setLong(5, user.getId());
+                if (updated > 0) {
+                    String credentialsSql = "UPDATE user_credentials SET login = ?, password_hash = ? WHERE user_id = ?";
+                    try (PreparedStatement statement = connection.prepareStatement(credentialsSql)) {
+                        statement.setString(1, user.getLogin());
+                        statement.setString(2, user.getPasswordHash());
+                        statement.setLong(3, user.getId());
+                        statement.executeUpdate();
+                    }
+                }
 
-            return statement.executeUpdate() > 0;
+                connection.commit();
+                return updated > 0;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
         } catch (SQLException e) {
             throw new DatabaseException("Ошибка при обновлении пользователя", e);
         }
@@ -111,6 +151,19 @@ public class UserRepository {
         } catch (SQLException e) {
             throw new DatabaseException("Ошибка при удалении пользователя", e);
         }
+    }
+
+    private long findRoleId(Connection connection, String code) throws SQLException {
+        String sql = "SELECT id FROM roles WHERE code = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, code);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getLong("id");
+                }
+            }
+        }
+        throw new DatabaseException("Роль " + code + " не найдена в справочнике");
     }
 
     private User mapRow(ResultSet resultSet) throws SQLException {

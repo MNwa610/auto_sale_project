@@ -4,6 +4,10 @@ import carmarket.enums.UserRole;
 
 import java.time.LocalDateTime;
 
+/**
+ * Профиль пользователя для UI.
+ * В БД роль — справочник roles, логин и пароль — user_credentials.
+ */
 public class User {
 
     private Long id;

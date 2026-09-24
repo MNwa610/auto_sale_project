@@ -2,6 +2,7 @@ package carmarket.ui;
 
 import carmarket.enums.RequestStatus;
 import carmarket.model.PurchaseRequest;
+import carmarket.repository.CatalogRepository;
 import carmarket.service.CarService;
 import carmarket.service.DataExportService;
 import carmarket.service.PurchaseRequestService;
@@ -20,6 +21,7 @@ public class AdminMenu {
     private final InputHelper inputHelper;
     private final StatisticsService statisticsService;
     private final DataExportService dataExportService;
+    private final CatalogRepository catalogRepository;
 
     public AdminMenu(UserService userService,
                      CarService carService,
@@ -31,6 +33,7 @@ public class AdminMenu {
         this.inputHelper = inputHelper;
         this.statisticsService = new StatisticsService();
         this.dataExportService = new DataExportService();
+        this.catalogRepository = new CatalogRepository();
     }
 
     public void show() {
@@ -252,28 +255,72 @@ public class AdminMenu {
         boolean running = true;
 
         while (running) {
-            ConsoleView.printSection("Таблицы БД");
-            ConsoleView.printMenuOption(1, "Users");
-            ConsoleView.printMenuOption(2, "Cars");
-            ConsoleView.printMenuOption(3, "PurchaseRequests");
-            ConsoleView.printMenuOption(4, "Назад");
+            ConsoleView.printSection("Таблицы БД (3НФ)");
+            ConsoleView.printMenuOption(1, "roles");
+            ConsoleView.printMenuOption(2, "users");
+            ConsoleView.printMenuOption(3, "brands");
+            ConsoleView.printMenuOption(4, "car_models");
+            ConsoleView.printMenuOption(5, "body_types");
+            ConsoleView.printMenuOption(6, "transmissions");
+            ConsoleView.printMenuOption(7, "fuel_types");
+            ConsoleView.printMenuOption(8, "cars");
+            ConsoleView.printMenuOption(9, "car_specifications");
+            ConsoleView.printMenuOption(10, "purchase_requests");
+            ConsoleView.printMenuOption(11, "Назад");
 
             int choice = inputHelper.readInt("Выберите пункт: ");
 
             switch (choice) {
                 case 1 -> {
-                    ConsoleView.printUsers(userService.findAll());
+                    ConsoleView.printRoles(catalogRepository.findAllRoles());
                     inputHelper.pause();
                 }
                 case 2 -> {
-                    ConsoleView.printCars(carService.findAll());
+                    ConsoleView.printUsers(userService.findAll());
                     inputHelper.pause();
                 }
                 case 3 -> {
+                    ConsoleView.printBrands(catalogRepository.findAllBrands());
+                    inputHelper.pause();
+                }
+                case 4 -> {
+                    ConsoleView.printCarModels(catalogRepository.findAllModels());
+                    inputHelper.pause();
+                }
+                case 5 -> {
+                    ConsoleView.printCatalogItems(
+                            catalogRepository.findAllBodyTypes(),
+                            "Типы кузова не найдены."
+                    );
+                    inputHelper.pause();
+                }
+                case 6 -> {
+                    ConsoleView.printCatalogItems(
+                            catalogRepository.findAllTransmissions(),
+                            "Коробки передач не найдены."
+                    );
+                    inputHelper.pause();
+                }
+                case 7 -> {
+                    ConsoleView.printCatalogItems(
+                            catalogRepository.findAllFuelTypes(),
+                            "Типы топлива не найдены."
+                    );
+                    inputHelper.pause();
+                }
+                case 8 -> {
+                    ConsoleView.printCars(carService.findAll());
+                    inputHelper.pause();
+                }
+                case 9 -> {
+                    ConsoleView.printSpecifications(catalogRepository.findAllSpecifications());
+                    inputHelper.pause();
+                }
+                case 10 -> {
                     ConsoleView.printRequests(requestService.findAll());
                     inputHelper.pause();
                 }
-                case 4 -> running = false;
+                case 11 -> running = false;
                 default -> ConsoleView.printError("Такого пункта нет.");
             }
         }

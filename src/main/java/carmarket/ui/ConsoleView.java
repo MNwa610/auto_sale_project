@@ -3,8 +3,13 @@ package carmarket.ui;
 import carmarket.enums.CarStatus;
 import carmarket.enums.RequestStatus;
 import carmarket.enums.UserRole;
+import carmarket.model.Brand;
 import carmarket.model.Car;
+import carmarket.model.CarModel;
+import carmarket.model.CarSpecification;
+import carmarket.model.NamedCatalogItem;
 import carmarket.model.PurchaseRequest;
+import carmarket.model.Role;
 import carmarket.model.User;
 import carmarket.service.SystemStatistics;
 
@@ -164,6 +169,79 @@ public final class ConsoleView {
         if (request.getUpdatedAt() != null) {
             printDetailLine("Обновлена", request.getUpdatedAt().format(DATE_TIME));
         }
+    }
+
+    public static void printRoles(List<Role> roles) {
+        if (roles.isEmpty()) {
+            printMessage("Роли не найдены.");
+            return;
+        }
+        for (Role role : roles) {
+            System.out.printf("ID %s | %s | %s%n", str(role.getId()), role.getCode(), role.getName());
+        }
+        blankLine();
+        printMessage("Найдено: " + roles.size());
+    }
+
+    public static void printBrands(List<Brand> brands) {
+        if (brands.isEmpty()) {
+            printMessage("Марки не найдены.");
+            return;
+        }
+        for (Brand brand : brands) {
+            System.out.printf("ID %s | %s%n", str(brand.getId()), nullToDash(brand.getName()));
+        }
+        blankLine();
+        printMessage("Найдено: " + brands.size());
+    }
+
+    public static void printCarModels(List<CarModel> models) {
+        if (models.isEmpty()) {
+            printMessage("Модели не найдены.");
+            return;
+        }
+        for (CarModel model : models) {
+            System.out.printf("ID %s | %s | %s%n",
+                    str(model.getId()),
+                    nullToDash(model.getBrandName()),
+                    nullToDash(model.getName()));
+        }
+        blankLine();
+        printMessage("Найдено: " + models.size());
+    }
+
+    public static void printCatalogItems(List<NamedCatalogItem> items, String emptyMessage) {
+        if (items.isEmpty()) {
+            printMessage(emptyMessage);
+            return;
+        }
+        for (NamedCatalogItem item : items) {
+            System.out.printf("ID %s | %s%n", str(item.getId()), nullToDash(item.getName()));
+        }
+        blankLine();
+        printMessage("Найдено: " + items.size());
+    }
+
+    public static void printSpecifications(List<CarSpecification> specifications) {
+        if (specifications.isEmpty()) {
+            printMessage("Характеристики не найдены.");
+            return;
+        }
+        for (CarSpecification specification : specifications) {
+            System.out.printf(
+                    "Авто %s | VIN %s | %s | %s | %s | %s л%n",
+                    str(specification.getCarId()),
+                    nullToDash(specification.getVin()),
+                    nullToDash(specification.getBodyType()),
+                    nullToDash(specification.getTransmission()),
+                    nullToDash(specification.getFuelType()),
+                    specification.getEngineVolume() == null
+                            ? "-"
+                            : specification.getEngineVolume().stripTrailingZeros().toPlainString()
+            );
+        }
+        blankLine();
+        printMessage("Найдено: " + specifications.size());
     }
 
     public static void printStatistics(SystemStatistics statistics) {
