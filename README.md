@@ -398,7 +398,8 @@ CANCELLED
 
 ## ER-диаграмма
 
-<img width="4300" height="11696" alt="ER_UCM1" src="https://github.com/user-attachments/assets/dcf7e3d6-fdfd-422f-8893-8ea57a890ed5" />
+<img width="3428" height="7720" alt="ERD" src="https://github.com/user-attachments/assets/abe7b209-0f5d-4809-9c15-972e6982b03b" />
+
 
 
 Основные связи между таблицами:
