@@ -398,14 +398,115 @@ CANCELLED
 
 ## ER-диаграмма
 
-<img width="3428" height="7720" alt="ERD" src="https://github.com/user-attachments/assets/abe7b209-0f5d-4809-9c15-972e6982b03b" />
+```mermaid
+erDiagram
+    ROLES ||--o{ USERS : "has"
+    USERS ||--|| USER_CREDENTIALS : "has credentials"
+
+    BRANDS ||--o{ CAR_MODELS : "contains"
+    CAR_MODELS ||--o{ CARS : "used in"
+
+    USERS ||--o{ CARS : "sells"
+    CARS ||--|| CAR_SPECIFICATIONS : "has specifications"
+
+    BODY_TYPES ||--o{ CAR_SPECIFICATIONS : "defines"
+    TRANSMISSIONS ||--o{ CAR_SPECIFICATIONS : "defines"
+    FUEL_TYPES ||--o{ CAR_SPECIFICATIONS : "defines"
+
+    USERS ||--o{ PURCHASE_REQUESTS : "creates"
+    CARS ||--o{ PURCHASE_REQUESTS : "receives"
+
+    ROLES {
+        BIGSERIAL id PK
+        VARCHAR_20 code UK
+        VARCHAR_50 name UK
+    }
+
+    USERS {
+        BIGSERIAL id PK
+        VARCHAR_100 full_name
+        BIGINT role_id FK
+        TIMESTAMP created_at
+    }
+
+    USER_CREDENTIALS {
+        BIGINT user_id PK, FK
+        VARCHAR_50 login UK
+        VARCHAR_255 password_hash
+    }
+
+    BRANDS {
+        BIGSERIAL id PK
+        VARCHAR_50 name UK
+    }
+
+    CAR_MODELS {
+        BIGSERIAL id PK
+        BIGINT brand_id FK
+        VARCHAR_100 name
+    }
+
+    BODY_TYPES {
+        BIGSERIAL id PK
+        VARCHAR_30 name UK
+    }
+
+    TRANSMISSIONS {
+        BIGSERIAL id PK
+        VARCHAR_30 name UK
+    }
+
+    FUEL_TYPES {
+        BIGSERIAL id PK
+        VARCHAR_30 name UK
+    }
+
+    CARS {
+        BIGSERIAL id PK
+        BIGINT seller_id FK
+        BIGINT model_id FK
+        INTEGER year
+        INTEGER mileage
+        NUMERIC_12_2 price
+        VARCHAR_20 status
+        TIMESTAMP created_at
+    }
+
+    CAR_SPECIFICATIONS {
+        BIGINT car_id PK, FK
+        VARCHAR_17 vin UK
+        BIGINT body_type_id FK
+        BIGINT transmission_id FK
+        BIGINT fuel_type_id FK
+        NUMERIC_3_1 engine_volume
+        TEXT description
+    }
+
+    PURCHASE_REQUESTS {
+        BIGSERIAL id PK
+        BIGINT user_id FK
+        BIGINT car_id FK
+        VARCHAR_1000 message
+        VARCHAR_30 status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+```
 
 
 
 Основные связи между таблицами:
 
 ```
-USERS -> CARS
-USERS -> PURCHASE_REQUESTS
-CARS  -> PURCHASE_REQUESTS
+ROLES 1:N USERS - одна роль может принадлежать многим пользователям.
+USERS 1:1 USER_CREDENTIALS - учётные данные принадлежат одному пользователю; user_id одновременно PK и FK.
+BRANDS 1:N CAR_MODELS - у одной марки может быть много моделей.
+CAR_MODELS 1:N CARS - одна модель может использоваться в нескольких объявлениях.
+USERS 1:N CARS - один пользователь может продавать несколько автомобилей.
+CARS 1:1 CAR_SPECIFICATIONS - технические характеристики вынесены в отдельную таблицу; car_id одновременно PK и FK.
+BODY_TYPES 1:N CAR_SPECIFICATIONS - один тип кузова может использоваться у многих автомобилей.
+TRANSMISSIONS 1:N CAR_SPECIFICATIONS - одна коробка передач может использоваться у многих автомобилей.
+FUEL_TYPES 1:N CAR_SPECIFICATIONS - один тип топлива может использоваться у многих автомобилей.
+USERS 1:N PURCHASE_REQUESTS - один пользователь может создать несколько заявок.
+CARS 1:N PURCHASE_REQUESTS - на один автомобиль может быть несколько заявок.
 ```
