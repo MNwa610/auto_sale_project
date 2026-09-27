@@ -30,43 +30,33 @@ public class CarRepository {
 
     public Car create(Car car) {
         try (Connection connection = DatabaseManager.getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                long brandId = findOrCreateByName(connection, "brands", car.getBrand());
-                long modelId = findOrCreateModel(connection, brandId, car.getModel());
-                long bodyTypeId = findOrCreateByName(connection, "body_types", car.getBodyType());
-                long transmissionId = findOrCreateByName(connection, "transmissions", car.getTransmission());
-                long fuelTypeId = findOrCreateByName(connection, "fuel_types", car.getFuelType());
+            long brandId = findOrCreateByName(connection, "brands", car.getBrand());
+            long modelId = findOrCreateModel(connection, brandId, car.getModel());
+            long bodyTypeId = findOrCreateByName(connection, "body_types", car.getBodyType());
+            long transmissionId = findOrCreateByName(connection, "transmissions", car.getTransmission());
+            long fuelTypeId = findOrCreateByName(connection, "fuel_types", car.getFuelType());
 
-                String carSql = "INSERT INTO cars (seller_id, model_id, year, mileage, price, status) " +
-                        "VALUES (?, ?, ?, ?, ?, ?) RETURNING id, created_at";
+            String carSql = "INSERT INTO cars (seller_id, model_id, year, mileage, price, status) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
 
-                try (PreparedStatement statement = connection.prepareStatement(carSql)) {
-                    statement.setLong(1, car.getSellerId());
-                    statement.setLong(2, modelId);
-                    statement.setInt(3, car.getYear());
-                    statement.setInt(4, car.getMileage());
-                    statement.setBigDecimal(5, car.getPrice());
-                    statement.setString(6, car.getStatus().name());
+            try (PreparedStatement statement = connection.prepareStatement(carSql, new String[]{"id"})) {
+                statement.setLong(1, car.getSellerId());
+                statement.setLong(2, modelId);
+                statement.setInt(3, car.getYear());
+                statement.setInt(4, car.getMileage());
+                statement.setBigDecimal(5, car.getPrice());
+                statement.setString(6, car.getStatus().name());
 
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            car.setId(resultSet.getLong("id"));
-                            if (resultSet.getTimestamp("created_at") != null) {
-                                car.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                            }
-                        }
+                statement.executeUpdate();
+
+                try (ResultSet resultSet = statement.getGeneratedKeys()) {
+                    if (resultSet.next()) {
+                        car.setId(resultSet.getLong("id"));
                     }
                 }
-
-                insertSpecification(connection, car, bodyTypeId, transmissionId, fuelTypeId);
-                connection.commit();
-            } catch (SQLException e) {
-                connection.rollback();
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
             }
+
+            insertSpecification(connection, car, bodyTypeId, transmissionId, fuelTypeId);
         } catch (SQLException e) {
             throw new DatabaseException("Ошибка при создании автомобиля", e);
         }
@@ -114,41 +104,32 @@ public class CarRepository {
 
     public boolean update(Car car) {
         try (Connection connection = DatabaseManager.getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                long brandId = findOrCreateByName(connection, "brands", car.getBrand());
-                long modelId = findOrCreateModel(connection, brandId, car.getModel());
-                long bodyTypeId = findOrCreateByName(connection, "body_types", car.getBodyType());
-                long transmissionId = findOrCreateByName(connection, "transmissions", car.getTransmission());
-                long fuelTypeId = findOrCreateByName(connection, "fuel_types", car.getFuelType());
+            long brandId = findOrCreateByName(connection, "brands", car.getBrand());
+            long modelId = findOrCreateModel(connection, brandId, car.getModel());
+            long bodyTypeId = findOrCreateByName(connection, "body_types", car.getBodyType());
+            long transmissionId = findOrCreateByName(connection, "transmissions", car.getTransmission());
+            long fuelTypeId = findOrCreateByName(connection, "fuel_types", car.getFuelType());
 
-                String carSql = "UPDATE cars SET seller_id = ?, model_id = ?, year = ?, mileage = ?, " +
-                        "price = ?, status = ? WHERE id = ?";
+            String carSql = "UPDATE cars SET seller_id = ?, model_id = ?, year = ?, mileage = ?, " +
+                    "price = ?, status = ? WHERE id = ?";
 
-                int updated;
-                try (PreparedStatement statement = connection.prepareStatement(carSql)) {
-                    statement.setLong(1, car.getSellerId());
-                    statement.setLong(2, modelId);
-                    statement.setInt(3, car.getYear());
-                    statement.setInt(4, car.getMileage());
-                    statement.setBigDecimal(5, car.getPrice());
-                    statement.setString(6, car.getStatus().name());
-                    statement.setLong(7, car.getId());
-                    updated = statement.executeUpdate();
-                }
-
-                if (updated > 0) {
-                    updateSpecification(connection, car, bodyTypeId, transmissionId, fuelTypeId);
-                }
-
-                connection.commit();
-                return updated > 0;
-            } catch (SQLException e) {
-                connection.rollback();
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
+            int updated;
+            try (PreparedStatement statement = connection.prepareStatement(carSql)) {
+                statement.setLong(1, car.getSellerId());
+                statement.setLong(2, modelId);
+                statement.setInt(3, car.getYear());
+                statement.setInt(4, car.getMileage());
+                statement.setBigDecimal(5, car.getPrice());
+                statement.setString(6, car.getStatus().name());
+                statement.setLong(7, car.getId());
+                updated = statement.executeUpdate();
             }
+
+            if (updated > 0) {
+                updateSpecification(connection, car, bodyTypeId, transmissionId, fuelTypeId);
+            }
+
+            return updated > 0;
         } catch (SQLException e) {
             throw new DatabaseException("Ошибка при обновлении автомобиля", e);
         }
