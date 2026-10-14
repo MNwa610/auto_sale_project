@@ -26,5 +26,6 @@ Thumbs.db
 # Экспорт Excel
 marketplace_export.xlsx
 
-# Конфигурация с паролями (если будет локальный config)
+# Конфигурация с паролями
+src/main/resources/database.properties
 config.local.properties

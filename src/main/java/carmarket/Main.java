@@ -1,10 +1,11 @@
 package carmarket;
 
-import carmarket.ui.ConsoleMenu;
+import carmarket.fx.CarMarketApplication;
+import javafx.application.Application;
 
 public class Main {
 
     public static void main(String[] args) {
-        new ConsoleMenu().start();
+        Application.launch(CarMarketApplication.class, args);
     }
 }
