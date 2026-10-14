@@ -13,6 +13,9 @@ public class PurchaseRequest {
     private RequestStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String userFullName;
+    private String carBrand;
+    private String carModel;
 
     public PurchaseRequest() {
     }
@@ -78,6 +81,30 @@ public class PurchaseRequest {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getUserFullName() {
+        return userFullName;
+    }
+
+    public void setUserFullName(String userFullName) {
+        this.userFullName = userFullName;
+    }
+
+    public String getCarBrand() {
+        return carBrand;
+    }
+
+    public void setCarBrand(String carBrand) {
+        this.carBrand = carBrand;
+    }
+
+    public String getCarModel() {
+        return carModel;
+    }
+
+    public void setCarModel(String carModel) {
+        this.carModel = carModel;
     }
 
     @Override

@@ -31,6 +31,33 @@ public class InMemoryPurchaseRequestRepository extends PurchaseRequestRepository
     }
 
     @Override
+    public List<PurchaseRequest> findAllWithDetails() {
+        return findAll();
+    }
+
+    @Override
+    public List<PurchaseRequest> findByUserId(Long userId) {
+        List<PurchaseRequest> result = new ArrayList<>();
+        for (PurchaseRequest request : requests) {
+            if (request.getUserId().equals(userId)) {
+                result.add(request);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public List<PurchaseRequest> findByCarId(Long carId) {
+        List<PurchaseRequest> result = new ArrayList<>();
+        for (PurchaseRequest request : requests) {
+            if (request.getCarId().equals(carId)) {
+                result.add(request);
+            }
+        }
+        return result;
+    }
+
+    @Override
     public PurchaseRequest findById(Long id) {
         for (PurchaseRequest request : requests) {
             if (request.getId().equals(id)) {

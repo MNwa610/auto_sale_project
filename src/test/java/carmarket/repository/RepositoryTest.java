@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +24,7 @@ class RepositoryTest {
     static void checkDatabaseConnection() {
         try (Connection connection = DatabaseManager.getConnection()) {
             databaseAvailable = connection.isValid(2);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             databaseAvailable = false;
         }
     }
@@ -114,6 +113,21 @@ class RepositoryTest {
         assertNotNull(firstRequest.getUserId());
         assertNotNull(firstRequest.getCarId());
         assertNotNull(firstRequest.getStatus());
+    }
+
+    @Test
+    void findAllWithDetails_shouldFillUserAndCarNames() {
+        assumeTrue(databaseAvailable, "PostgreSQL недоступен — проверь database.properties");
+
+        PurchaseRequestRepository repository = new PurchaseRequestRepository();
+        List<PurchaseRequest> requests = repository.findAllWithDetails();
+
+        assertFalse(requests.isEmpty());
+
+        PurchaseRequest firstRequest = requests.get(0);
+        assertNotNull(firstRequest.getUserFullName());
+        assertNotNull(firstRequest.getCarBrand());
+        assertNotNull(firstRequest.getCarModel());
     }
 
     @Test

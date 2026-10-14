@@ -14,6 +14,15 @@ import java.util.List;
 
 public class PurchaseRequestRepository {
 
+    private static final String REQUEST_COLUMNS =
+            "SELECT pr.id, pr.user_id, pr.car_id, pr.message, pr.status, pr.created_at, pr.updated_at";
+
+    private static final String REQUEST_DETAILS_JOIN =
+            " JOIN users u ON u.id = pr.user_id" +
+                    " JOIN cars c ON c.id = pr.car_id" +
+                    " JOIN car_models m ON m.id = c.model_id" +
+                    " JOIN brands b ON b.id = m.brand_id";
+
     public PurchaseRequest create(PurchaseRequest request) {
         String sql = "INSERT INTO purchase_requests (user_id, car_id, message, status) " +
                 "VALUES (?, ?, ?, ?) RETURNING id, created_at, updated_at";
@@ -45,27 +54,30 @@ public class PurchaseRequestRepository {
     }
 
     public List<PurchaseRequest> findAll() {
-        List<PurchaseRequest> requests = new ArrayList<>();
-        String sql = "SELECT id, user_id, car_id, message, status, created_at, updated_at " +
-                "FROM purchase_requests ORDER BY id";
+        return findList(REQUEST_COLUMNS + " FROM purchase_requests pr ORDER BY pr.id");
+    }
 
-        try (Connection connection = DatabaseManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+    public List<PurchaseRequest> findAllWithDetails() {
+        String sql = REQUEST_COLUMNS
+                + ", u.full_name AS user_full_name, b.name AS car_brand, m.name AS car_model"
+                + " FROM purchase_requests pr"
+                + REQUEST_DETAILS_JOIN
+                + " ORDER BY pr.id";
+        return findListWithDetails(sql);
+    }
 
-            while (resultSet.next()) {
-                requests.add(mapRow(resultSet));
-            }
-        } catch (SQLException e) {
-            throw new DatabaseException("Ошибка при получении списка заявок", e);
-        }
+    public List<PurchaseRequest> findByUserId(Long userId) {
+        String sql = REQUEST_COLUMNS + " FROM purchase_requests pr WHERE pr.user_id = ? ORDER BY pr.id";
+        return findList(sql, userId);
+    }
 
-        return requests;
+    public List<PurchaseRequest> findByCarId(Long carId) {
+        String sql = REQUEST_COLUMNS + " FROM purchase_requests pr WHERE pr.car_id = ? ORDER BY pr.id";
+        return findList(sql, carId);
     }
 
     public PurchaseRequest findById(Long id) {
-        String sql = "SELECT id, user_id, car_id, message, status, created_at, updated_at " +
-                "FROM purchase_requests WHERE id = ?";
+        String sql = REQUEST_COLUMNS + " FROM purchase_requests pr WHERE pr.id = ?";
 
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -133,5 +145,56 @@ public class PurchaseRequestRepository {
         }
 
         return request;
+    }
+
+    private PurchaseRequest mapRowWithDetails(ResultSet resultSet) throws SQLException {
+        PurchaseRequest request = mapRow(resultSet);
+        request.setUserFullName(resultSet.getString("user_full_name"));
+        request.setCarBrand(resultSet.getString("car_brand"));
+        request.setCarModel(resultSet.getString("car_model"));
+        return request;
+    }
+
+    private List<PurchaseRequest> findList(String sql) {
+        return findList(sql, null);
+    }
+
+    private List<PurchaseRequest> findList(String sql, Long parameter) {
+        List<PurchaseRequest> requests = new ArrayList<>();
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            if (parameter != null) {
+                statement.setLong(1, parameter);
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    requests.add(mapRow(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Ошибка при получении списка заявок", e);
+        }
+
+        return requests;
+    }
+
+    private List<PurchaseRequest> findListWithDetails(String sql) {
+        List<PurchaseRequest> requests = new ArrayList<>();
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                requests.add(mapRowWithDetails(resultSet));
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Ошибка при получении списка заявок", e);
+        }
+
+        return requests;
     }
 }

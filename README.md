@@ -1,20 +1,43 @@
 # Маркетплейс автомобилей с пробегом
 
-Консольное приложение на Java для учебной работы (КР1).
+Учебное JavaFX-приложение (КР №2) на основе консольной КР №1. Работа ведётся в `main`. Сдача КР №1 зафиксирована тегом `kr1-final`.
+
+## Статус КР №2
+
+- [x] Этап 1 — Maven, Java 21, JavaFX, пустое окно. Эталонный `pom.xml` преподавателя (свои `groupId`/`artifactId`/`mainClass`, добавлен Apache POI). Консольный `ui/` перенесён в `legacy-console/` (`git mv`), Maven его не компилирует. Запуск: `carmarket.fx.CarMarketApplication` и `fxml/main-view.fxml` (заголовок и пустой `BorderPane`).
+- [x] Этап 2 — подключение к PostgreSQL КР №1 по JDBC (`database.properties`, `DatabaseManager`, проверка связи при старте, `findAll` и JOIN для заявок).
+- [ ] Этап 3 — главное окно и TableView заявок
+- [ ] Этап 4 — добавление и редактирование заявки
+- [ ] Этап 5 — удаление и смена статуса
+- [ ] Этап 6 — валидация и обработка ошибок
+- [ ] Этап 7 — вкладка «Автомобили»
+- [ ] Этап 8 — вкладка «Пользователи»
+- [ ] Этап 9 — поиск, фильтрация, сортировка
+- [ ] Этап 10 — просмотр связанных данных
+- [ ] Этап 11 — статистика
+- [ ] Этап 12 — экспорт
+- [ ] Этап 13 — CSS
+- [ ] Этап 14 — тесты, README, подготовка к защите
+
+Jackson в `pom.xml` оставлен из эталонного pom преподавателя, в КР №2 не используется.
 
 ## Технологии
 
-- Java 17
-- Maven
+- Java 21
+- JavaFX 21.0.8
+- Maven 3.9+
 - PostgreSQL
 - JDBC
+- FXML, CSS
 - Apache POI
-- JUnit
+- JUnit 5, AssertJ
+- slf4j
 
 ## PostgreSQL
 
-1. Создай базу `auto_sale` и выполни SQL-скрипт (таблицы, тестовые данные, индексы) в DBeaver.
-2. Настрой подключение в `src/main/resources/database.properties`:
+1. Создай базу `auto_sale`.
+2. При необходимости выполни `database.sql` в DBeaver. **Внимание:** скрипт начинается с `DROP TABLE ... CASCADE` и удаляет существующие таблицы. Не запускай его на заполненной базе без необходимости.
+3. Скопируй `src/main/resources/database.properties.example` в `src/main/resources/database.properties` и укажи пароль. Файл с паролем в git не попадает.
 
 ```properties
 db.url=jdbc:postgresql://localhost:5432/auto_sale
@@ -40,28 +63,36 @@ mvn test
 
 Интеграционные тесты репозитория (`RepositoryTest`, `CrudRepositoryTest`) требуют запущенный PostgreSQL с заполненной БД. Тесты сервисов работают без БД.
 
-## Запуск (этап 1)
+## Запуск
 
 ```bash
-java -cp target/classes carmarket.Main
+mvn javafx:run
 ```
+
+Если PostgreSQL не запущен или параметры в `database.properties` неверны, приложение открывает окно и показывает понятное сообщение об ошибке.
 
 ## Структура проекта
 
 ```
 src/main/java/carmarket/
     Main.java
+    fx/
+    controller/
     model/
     enums/
     repository/
     service/
-    ui/
     interfaces/
     exception/
     util/
+src/main/resources/
+    fxml/
+    css/
+    database.properties.example
+legacy-console/carmarket/ui/   — консоль КР №1, не входит в сборку
 ```
 
-## Статус разработки
+## Статус разработки КР №1
 
 - [x] Этап 1 — инициализация Maven-проекта
 - [x] Этап 2 — схема базы данных PostgreSQL
@@ -72,8 +103,6 @@ src/main/java/carmarket/
 - [x] Этап 7 — поиск, фильтрация, сортировка
 - [x] Этап 8 — консольное меню
 - [x] Этап 9 — обработка ошибок ввода
-- [x] Этап 10 — статистика
-- [x] Этап 11 — экспорт в Excel
 - [x] Этап 10 — статистика
 - [x] Этап 11 — экспорт в Excel
 - [x] Этап 12 — просмотр таблиц БД

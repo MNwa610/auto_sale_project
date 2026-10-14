@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,7 +26,7 @@ class CrudRepositoryTest {
     static void checkDatabaseConnection() {
         try (Connection connection = DatabaseManager.getConnection()) {
             databaseAvailable = connection.isValid(2);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             databaseAvailable = false;
         }
     }

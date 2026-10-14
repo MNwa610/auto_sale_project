@@ -113,18 +113,18 @@ public class PurchaseRequestService {
         }
     }
 
+    public List<PurchaseRequest> findAllWithDetails() {
+        return purchaseRequestRepository.findAllWithDetails();
+    }
+
     public List<PurchaseRequest> findByUserId(Long userId) {
         validateUserExists(userId);
+        return purchaseRequestRepository.findByUserId(userId);
+    }
 
-        List<PurchaseRequest> result = new ArrayList<>();
-
-        for (PurchaseRequest request : purchaseRequestRepository.findAll()) {
-            if (request.getUserId().equals(userId)) {
-                result.add(request);
-            }
-        }
-
-        return result;
+    public List<PurchaseRequest> findByCarId(Long carId) {
+        validateCarForRequest(carId);
+        return purchaseRequestRepository.findByCarId(carId);
     }
 
     public List<PurchaseRequest> searchByUserName(String query) {
