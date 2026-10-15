@@ -6,7 +6,7 @@
 
 - [x] Этап 1 — Maven, Java 21, JavaFX, пустое окно. Эталонный `pom.xml` преподавателя (свои `groupId`/`artifactId`/`mainClass`, добавлен Apache POI). Консольный `ui/` перенесён в `legacy-console/` (`git mv`), Maven его не компилирует. Запуск: `carmarket.fx.CarMarketApplication` и `fxml/main-view.fxml` (заголовок и пустой `BorderPane`).
 - [x] Этап 2 — подключение к PostgreSQL КР №1 по JDBC (`database.properties`, `DatabaseManager`, проверка связи при старте, `findAll` и JOIN для заявок).
-- [ ] Этап 3 — главное окно и TableView заявок
+- [x] Этап 3 — главное окно и TableView заявок (вкладка «Заявки», колонки с ФИО и маркой/моделью, кнопка «Обновить», статусы по-русски)
 - [ ] Этап 4 — добавление и редактирование заявки
 - [ ] Этап 5 — удаление и смена статуса
 - [ ] Этап 6 — валидация и обработка ошибок

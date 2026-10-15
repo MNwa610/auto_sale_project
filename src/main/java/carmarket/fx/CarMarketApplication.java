@@ -27,7 +27,7 @@ public class CarMarketApplication extends Application {
         );
         Parent root = loader.load();
 
-        Scene scene = new Scene(root, 900, 600);
+        Scene scene = new Scene(root, 1100, 640);
         scene.getStylesheets().add(
                 CarMarketApplication.class.getResource("/css/style.css").toExternalForm()
         );
