@@ -2,19 +2,24 @@ package carmarket.service;
 
 import carmarket.enums.CarStatus;
 import carmarket.enums.RequestStatus;
+import carmarket.enums.SortField;
 import carmarket.exception.BusinessException;
 import carmarket.exception.EntityNotFoundException;
+import carmarket.interfaces.Searchable;
 import carmarket.model.Car;
 import carmarket.model.PurchaseRequest;
 import carmarket.model.User;
+import carmarket.model.TableQuery;
 import carmarket.repository.CarRepository;
 import carmarket.repository.PurchaseRequestRepository;
 import carmarket.repository.UserRepository;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.math.BigDecimal;
 
-public class PurchaseRequestService {
+public class PurchaseRequestService implements Searchable<PurchaseRequest> {
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final UserRepository userRepository;
     private final CarRepository carRepository;
@@ -151,6 +156,35 @@ public class PurchaseRequestService {
 
     public List<PurchaseRequest> findAllWithDetails() {
         return purchaseRequestRepository.findAllWithDetails();
+    }
+
+    @Override
+    public List<PurchaseRequest> search(String query) {
+        return findForTable(new TableQuery(query, null, null, null, SortField.DEFAULT, true));
+    }
+
+    public List<PurchaseRequest> findForTable(TableQuery query) {
+        BigDecimal min = SearchFilterService.parsePrice(query.minPrice(), "Цена от");
+        BigDecimal max = SearchFilterService.parsePrice(query.maxPrice(), "Цена до");
+        SearchFilterService.validatePriceRange(min, max);
+        List<PurchaseRequest> result = new ArrayList<>();
+        for (PurchaseRequest request : purchaseRequestRepository.findAllWithDetails()) {
+            if (SearchFilterService.matches(query.text(), request.getUserFullName(), request.getCarBrand(),
+                    request.getCarModel(), request.getMessage())
+                    && (query.status() == null || request.getStatus() == query.status())
+                    && SearchFilterService.inPriceRange(request.getCarPrice(), min, max)) {
+                result.add(request);
+            }
+        }
+        Comparator<PurchaseRequest> comparator = switch (query.sortField() == null ? SortField.DEFAULT : query.sortField()) {
+            case PRICE -> Comparator.comparing(PurchaseRequest::getCarPrice, Comparator.nullsLast(Comparator.naturalOrder()));
+            case MILEAGE -> Comparator.comparing(PurchaseRequest::getCarMileage, Comparator.nullsLast(Comparator.naturalOrder()));
+            case DATE -> Comparator.comparing(PurchaseRequest::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            case STATUS -> Comparator.comparing(request -> request.getStatus().getDisplayName());
+            default -> Comparator.comparing(PurchaseRequest::getId);
+        };
+        result.sort((query.ascending() ? comparator : comparator.reversed()).thenComparing(PurchaseRequest::getId));
+        return result;
     }
 
     public List<PurchaseRequest> findByUserId(Long userId) {

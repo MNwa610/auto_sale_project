@@ -2,6 +2,7 @@ package carmarket.model;
 
 import carmarket.enums.RequestStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class PurchaseRequest {
@@ -16,6 +17,8 @@ public class PurchaseRequest {
     private String userFullName;
     private String carBrand;
     private String carModel;
+    private BigDecimal carPrice;
+    private Integer carMileage;
 
     public PurchaseRequest() {
     }
@@ -105,6 +108,22 @@ public class PurchaseRequest {
 
     public void setCarModel(String carModel) {
         this.carModel = carModel;
+    }
+
+    public BigDecimal getCarPrice() {
+        return carPrice;
+    }
+
+    public void setCarPrice(BigDecimal carPrice) {
+        this.carPrice = carPrice;
+    }
+
+    public Integer getCarMileage() {
+        return carMileage;
+    }
+
+    public void setCarMileage(Integer carMileage) {
+        this.carMileage = carMileage;
     }
 
     @Override

@@ -2,13 +2,16 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
@@ -37,11 +40,31 @@
                         <Button text="Удалить" onAction="#onDeleteRequest"/>
                         <Button text="Сменить статус" onAction="#onChangeStatus"/>
                     </HBox>
+                    <FlowPane hgap="8" vgap="8">
+                        <Label text="Поиск"/>
+                        <TextField fx:id="requestSearchField" promptText="ФИО, марка, модель или сообщение"
+                                   prefWidth="300" onAction="#onApplyRequests"/>
+                        <Label text="Статус"/>
+                        <ComboBox fx:id="requestStatusBox" prefWidth="140"/>
+                        <Label text="Цена от"/>
+                        <TextField fx:id="minPriceField" prefWidth="110" onAction="#onApplyRequests"/>
+                        <Label text="до"/>
+                        <TextField fx:id="maxPriceField" prefWidth="110" onAction="#onApplyRequests"/>
+                    </FlowPane>
+                    <FlowPane hgap="8" vgap="8">
+                        <Label text="Сортировать по"/>
+                        <ComboBox fx:id="requestSortBox" prefWidth="190"/>
+                        <ComboBox fx:id="requestDirectionBox" prefWidth="180"/>
+                        <Button fx:id="applyRequestsButton" text="Применить" onAction="#onApplyRequests"/>
+                        <Button fx:id="resetRequestsButton" text="Сбросить" onAction="#onResetRequests"/>
+                    </FlowPane>
                 <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="idColumn" text="№" prefWidth="60"/>
                         <TableColumn fx:id="userColumn" text="Пользователь" prefWidth="180"/>
                         <TableColumn fx:id="carColumn" text="Автомобиль" prefWidth="180"/>
+                        <TableColumn fx:id="requestPriceColumn" text="Цена автомобиля, ₽" prefWidth="150"/>
+                        <TableColumn fx:id="requestMileageColumn" text="Пробег, км" prefWidth="110"/>
                         <TableColumn fx:id="statusColumn" text="Статус" prefWidth="120"/>
                         <TableColumn fx:id="messageColumn" text="Сообщение" prefWidth="260"/>
                         <TableColumn fx:id="createdAtColumn" text="Дата создания" prefWidth="150"/>
@@ -56,6 +79,16 @@
                         <Button text="Изменить" onAction="#onEditCar"/>
                         <Button text="Удалить" onAction="#onDeleteCar"/>
                     </HBox>
+                    <FlowPane hgap="8" vgap="8">
+                        <Label text="Поиск"/>
+                        <TextField fx:id="carSearchField" promptText="Марка, модель, продавец или VIN"
+                                   prefWidth="280" onAction="#onApplyCars"/>
+                        <Label text="Сортировать по"/>
+                        <ComboBox fx:id="carSortBox" prefWidth="180"/>
+                        <ComboBox fx:id="carDirectionBox" prefWidth="170"/>
+                        <Button fx:id="applyCarsButton" text="Применить" onAction="#onApplyCars"/>
+                        <Button fx:id="resetCarsButton" text="Сбросить" onAction="#onResetCars"/>
+                    </FlowPane>
                     <TableView fx:id="carsTable" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="brandColumn" text="Марка" prefWidth="110"/>

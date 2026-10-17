@@ -1,11 +1,13 @@
 package carmarket.controller;
 
 import carmarket.enums.RequestStatus;
+import carmarket.enums.SortField;
 import carmarket.exception.BusinessException;
 import carmarket.exception.DatabaseException;
 import carmarket.model.Car;
 import carmarket.model.PurchaseRequest;
 import carmarket.model.User;
+import carmarket.model.TableQuery;
 import carmarket.service.CarService;
 import carmarket.service.PurchaseRequestService;
 import carmarket.service.UserService;
@@ -17,6 +19,9 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.TextField;
 import javafx.stage.Window;
 
 import java.io.UncheckedIOException;
@@ -28,12 +33,14 @@ import java.util.function.Function;
 
 public class MainController {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-    private final PurchaseRequestService requestService = new PurchaseRequestService();
-    private final CarService carService = new CarService();
-    private final UserService userService = new UserService();
+    private final PurchaseRequestService requestService;
+    private final CarService carService;
+    private final UserService userService;
     private final ObservableList<PurchaseRequest> requests = FXCollections.observableArrayList();
     private final ObservableList<Car> cars = FXCollections.observableArrayList();
     private final ObservableList<User> users = FXCollections.observableArrayList();
+    private TableQuery requestQuery = TableQuery.empty();
+    private TableQuery carQuery = TableQuery.empty();
 
     @FXML private TableView<PurchaseRequest> requestsTable;
     @FXML private TableColumn<PurchaseRequest, Long> idColumn;
@@ -42,6 +49,14 @@ public class MainController {
     @FXML private TableColumn<PurchaseRequest, String> statusColumn;
     @FXML private TableColumn<PurchaseRequest, String> messageColumn;
     @FXML private TableColumn<PurchaseRequest, LocalDateTime> createdAtColumn;
+    @FXML private TableColumn<PurchaseRequest, BigDecimal> requestPriceColumn;
+    @FXML private TableColumn<PurchaseRequest, Integer> requestMileageColumn;
+    @FXML private TextField requestSearchField;
+    @FXML private ComboBox<RequestStatus> requestStatusBox;
+    @FXML private TextField minPriceField;
+    @FXML private TextField maxPriceField;
+    @FXML private ComboBox<SortField> requestSortBox;
+    @FXML private ComboBox<String> requestDirectionBox;
     @FXML private TableView<Car> carsTable;
     @FXML private TableColumn<Car, String> brandColumn;
     @FXML private TableColumn<Car, String> modelColumn;
@@ -51,11 +66,24 @@ public class MainController {
     @FXML private TableColumn<Car, String> carStatusColumn;
     @FXML private TableColumn<Car, String> sellerColumn;
     @FXML private TableColumn<Car, String> vinColumn;
+    @FXML private TextField carSearchField;
+    @FXML private ComboBox<SortField> carSortBox;
+    @FXML private ComboBox<String> carDirectionBox;
     @FXML private TableView<User> usersTable;
     @FXML private TableColumn<User, String> fullNameColumn;
     @FXML private TableColumn<User, String> loginColumn;
     @FXML private TableColumn<User, String> roleColumn;
     @FXML private TableColumn<User, LocalDateTime> registeredAtColumn;
+
+    public MainController() {
+        this(new PurchaseRequestService(), new CarService(), new UserService());
+    }
+
+    public MainController(PurchaseRequestService requestService, CarService carService, UserService userService) {
+        this.requestService = requestService;
+        this.carService = carService;
+        this.userService = userService;
+    }
 
     @FXML
     private void initialize() {
@@ -65,6 +93,8 @@ public class MainController {
         column(statusColumn, r -> r.getStatus().getDisplayName());
         column(messageColumn, PurchaseRequest::getMessage);
         dateColumn(createdAtColumn, PurchaseRequest::getCreatedAt);
+        column(requestPriceColumn, PurchaseRequest::getCarPrice);
+        column(requestMileageColumn, PurchaseRequest::getCarMileage);
         column(brandColumn, Car::getBrand);
         column(modelColumn, Car::getModel);
         column(yearColumn, Car::getYear);
@@ -80,6 +110,91 @@ public class MainController {
         requestsTable.setItems(requests);
         carsTable.setItems(cars);
         usersTable.setItems(users);
+        setupQueryControls();
+    }
+
+    private void setupQueryControls() {
+        // null обозначает вариант «Все»; отдельного статуса в БД для него нет.
+        requestStatusBox.getItems().add(null);
+        requestStatusBox.getItems().addAll(RequestStatus.values());
+        requestStatusBox.setConverter(new javafx.util.StringConverter<>() {
+            @Override public String toString(RequestStatus status) {
+                return status == null ? "Все" : status.getDisplayName();
+            }
+
+            @Override public RequestStatus fromString(String value) {
+                throw new UnsupportedOperationException("Выберите статус из списка");
+            }
+        });
+        requestStatusBox.setPromptText("Все");
+        requestStatusBox.setCellFactory(list -> requestStatusCell());
+        requestStatusBox.setButtonCell(requestStatusCell());
+        requestStatusBox.getSelectionModel().selectFirst();
+        DialogHelper.display(requestSortBox, SortField::getDisplayName);
+        DialogHelper.display(carSortBox, SortField::getDisplayName);
+        requestSortBox.getItems().setAll(SortField.values());
+        carSortBox.getItems().setAll(SortField.DEFAULT, SortField.PRICE, SortField.MILEAGE);
+        requestSortBox.setValue(SortField.DEFAULT);
+        carSortBox.setValue(SortField.DEFAULT);
+        requestDirectionBox.getItems().setAll("По возрастанию", "По убыванию");
+        carDirectionBox.getItems().setAll(requestDirectionBox.getItems());
+        requestDirectionBox.getSelectionModel().selectFirst();
+        carDirectionBox.getSelectionModel().selectFirst();
+    }
+
+    private ListCell<RequestStatus> requestStatusCell() {
+        return new ListCell<>() {
+            @Override protected void updateItem(RequestStatus status, boolean empty) {
+                super.updateItem(status, empty);
+                setText(empty ? null : status == null ? "Все" : status.getDisplayName());
+            }
+        };
+    }
+
+    @FXML private void onApplyRequests() {
+        perform(() -> applyRequests(new TableQuery(requestSearchField.getText(), requestStatusBox.getValue(),
+                minPriceField.getText(), maxPriceField.getText(), requestSortBox.getValue(),
+                requestDirectionBox.getSelectionModel().getSelectedIndex() == 0)));
+    }
+
+    private void applyRequests(TableQuery query) {
+        List<PurchaseRequest> result = requestService.findForTable(query);
+        requestQuery = query;
+        requestsTable.getSortOrder().clear();
+        requests.setAll(result);
+    }
+
+    @FXML private void onResetRequests() {
+        perform(() -> {
+            applyRequests(TableQuery.empty());
+            requestSearchField.clear();
+            requestStatusBox.getSelectionModel().selectFirst();
+            minPriceField.clear();
+            maxPriceField.clear();
+            requestSortBox.setValue(SortField.DEFAULT);
+            requestDirectionBox.getSelectionModel().selectFirst();
+        });
+    }
+
+    @FXML private void onApplyCars() {
+        perform(() -> applyCars(new TableQuery(carSearchField.getText(), null, null, null,
+                carSortBox.getValue(), carDirectionBox.getSelectionModel().getSelectedIndex() == 0)));
+    }
+
+    private void applyCars(TableQuery query) {
+        List<Car> result = carService.findForTable(query);
+        carQuery = query;
+        carsTable.getSortOrder().clear();
+        cars.setAll(result);
+    }
+
+    @FXML private void onResetCars() {
+        perform(() -> {
+            applyCars(TableQuery.empty());
+            carSearchField.clear();
+            carSortBox.setValue(SortField.DEFAULT);
+            carDirectionBox.getSelectionModel().selectFirst();
+        });
     }
 
     private <T, V> void column(TableColumn<T, V> column, Function<T, V> value) {
@@ -99,8 +214,8 @@ public class MainController {
 
     public void refreshAll() {
         // Ошибка БД не должна очищать уже показанные данные.
-        List<PurchaseRequest> freshRequests = requestService.findAllWithDetails();
-        List<Car> freshCars = carService.findAll();
+        List<PurchaseRequest> freshRequests = requestService.findForTable(requestQuery);
+        List<Car> freshCars = carService.findForTable(carQuery);
         List<User> freshUsers = userService.findAll();
         requests.setAll(freshRequests);
         cars.setAll(freshCars);
@@ -169,7 +284,7 @@ public class MainController {
     }
 
     private void reloadRequests(Long id) {
-        requests.setAll(requestService.findAllWithDetails());
+        requests.setAll(requestService.findForTable(requestQuery));
         requestsTable.sort();
         selectById(requestsTable, id, PurchaseRequest::getId);
     }

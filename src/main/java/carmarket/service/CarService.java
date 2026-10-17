@@ -1,9 +1,11 @@
 package carmarket.service;
 
 import carmarket.exception.BusinessException;
+import carmarket.enums.SortField;
 import carmarket.exception.EntityNotFoundException;
 import carmarket.interfaces.Searchable;
 import carmarket.model.Car;
+import carmarket.model.TableQuery;
 import carmarket.repository.CarRepository;
 import carmarket.repository.CatalogRepository;
 import carmarket.repository.PurchaseRequestRepository;
@@ -86,25 +88,22 @@ public class CarService implements Searchable<Car> {
 
     @Override
     public List<Car> search(String query) {
+        return findForTable(new TableQuery(query, null, null, null, SortField.DEFAULT, true));
+    }
+
+    public List<Car> findForTable(TableQuery query) {
         List<Car> result = new ArrayList<>();
-
-        if (query == null || query.isBlank()) {
-            return result;
-        }
-
-        String searchText = query.trim().toLowerCase();
-
         for (Car car : carRepository.findAll()) {
-            String brand = car.getBrand() == null ? "" : car.getBrand().toLowerCase();
-            String model = car.getModel() == null ? "" : car.getModel().toLowerCase();
-
-            if (brand.contains(searchText)
-                    || model.contains(searchText)
-                    || (brand + " " + model).contains(searchText)) {
+            if (SearchFilterService.matches(query.text(), car.getBrand(), car.getModel(), car.getSellerFullName(), car.getVin())) {
                 result.add(car);
             }
         }
-
+        Comparator<Car> comparator = switch (query.sortField() == null ? SortField.DEFAULT : query.sortField()) {
+            case PRICE -> Comparator.comparing(Car::getPrice);
+            case MILEAGE -> Comparator.comparingInt(Car::getMileage);
+            default -> Comparator.comparing(Car::getId);
+        };
+        result.sort((query.ascending() ? comparator : comparator.reversed()).thenComparing(Car::getId));
         return result;
     }
 
@@ -138,27 +137,11 @@ public class CarService implements Searchable<Car> {
     }
 
     public List<Car> sortByPrice(boolean ascending) {
-        List<Car> cars = new ArrayList<>(carRepository.findAll());
-
-        Comparator<Car> comparator = Comparator.comparing(Car::getPrice);
-        if (!ascending) {
-            comparator = comparator.reversed();
-        }
-
-        cars.sort(comparator);
-        return cars;
+        return findForTable(new TableQuery(null, null, null, null, SortField.PRICE, ascending));
     }
 
     public List<Car> sortByMileage(boolean ascending) {
-        List<Car> cars = new ArrayList<>(carRepository.findAll());
-
-        Comparator<Car> comparator = Comparator.comparingInt(Car::getMileage);
-        if (!ascending) {
-            comparator = comparator.reversed();
-        }
-
-        cars.sort(comparator);
-        return cars;
+        return findForTable(new TableQuery(null, null, null, null, SortField.MILEAGE, ascending));
     }
 
     private void validateCar(Car car) {

@@ -60,6 +60,7 @@ public class PurchaseRequestRepository {
     public List<PurchaseRequest> findAllWithDetails() {
         String sql = REQUEST_COLUMNS
                 + ", u.full_name AS user_full_name, b.name AS car_brand, m.name AS car_model"
+                + ", c.price AS car_price, c.mileage AS car_mileage"
                 + " FROM purchase_requests pr"
                 + REQUEST_DETAILS_JOIN
                 + " ORDER BY pr.id";
@@ -152,6 +153,8 @@ public class PurchaseRequestRepository {
         request.setUserFullName(resultSet.getString("user_full_name"));
         request.setCarBrand(resultSet.getString("car_brand"));
         request.setCarModel(resultSet.getString("car_model"));
+        request.setCarPrice(resultSet.getBigDecimal("car_price"));
+        request.setCarMileage(resultSet.getInt("car_mileage"));
         return request;
     }
 
