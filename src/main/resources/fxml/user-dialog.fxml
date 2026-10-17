@@ -3,7 +3,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="carmarket.controller.UserDialogController" spacing="10" prefWidth="560">
+      fx:controller="carmarket.controller.UserDialogController"
+      spacing="10" prefWidth="560" minWidth="460" styleClass="dialog-root">
     <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
     <Label text="ФИО (не более 100 символов)"/>
     <TextField fx:id="fullNameField"/>
@@ -13,9 +14,9 @@
     <ComboBox fx:id="roleBox" maxWidth="Infinity"/>
     <Label text="Пароль"/>
     <PasswordField fx:id="passwordField"/>
-    <Label fx:id="passwordHint" wrapText="true"/>
-    <HBox spacing="8" alignment="CENTER_RIGHT">
-        <Button text="Сохранить" onAction="#onSave" defaultButton="true"/>
+    <Label fx:id="passwordHint" wrapText="true" styleClass="hint-label"/>
+    <HBox spacing="8" alignment="CENTER_RIGHT" styleClass="form-actions">
+        <Button text="Сохранить" onAction="#onSave" defaultButton="true" styleClass="primary-button"/>
         <Button text="Отмена" onAction="#onCancel" cancelButton="true"/>
     </HBox>
 </VBox>

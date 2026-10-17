@@ -25,12 +25,14 @@ public class CarMarketApplication extends Application {
         );
         Parent root = loader.load();
 
-        Scene scene = new Scene(root, 1100, 640);
+        Scene scene = new Scene(root, 1100, 680);
         scene.getStylesheets().add(
                 CarMarketApplication.class.getResource("/css/style.css").toExternalForm()
         );
 
         stage.setTitle("Маркетплейс автомобилей с пробегом");
+        stage.setMinWidth(920);
+        stage.setMinHeight(560);
         stage.setScene(scene);
         stage.show();
 

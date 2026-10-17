@@ -3,7 +3,9 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="carmarket.controller.RelatedDataController" spacing="12" prefWidth="960" prefHeight="560">
+      fx:controller="carmarket.controller.RelatedDataController"
+      spacing="12" prefWidth="960" prefHeight="560" minWidth="640" minHeight="400"
+      styleClass="dialog-root">
     <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
     <Label fx:id="contextLabel" styleClass="title-label" wrapText="true"/>
     <TabPane fx:id="relatedTabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
@@ -11,13 +13,13 @@
             <TableView fx:id="relatedCarsTable">
                 <placeholder><Label text="У пользователя нет автомобилей"/></placeholder>
                 <columns>
-                    <TableColumn fx:id="carIdColumn" text="№" prefWidth="60"/>
-                    <TableColumn fx:id="carNameColumn" text="Автомобиль" prefWidth="190"/>
-                    <TableColumn fx:id="yearColumn" text="Год" prefWidth="70"/>
-                    <TableColumn fx:id="mileageColumn" text="Пробег, км" prefWidth="110"/>
-                    <TableColumn fx:id="priceColumn" text="Цена, ₽" prefWidth="130"/>
-                    <TableColumn fx:id="carStatusColumn" text="Статус" prefWidth="140"/>
-                    <TableColumn fx:id="vinColumn" text="VIN" prefWidth="180"/>
+                    <TableColumn fx:id="carIdColumn" text="№" prefWidth="60" minWidth="50"/>
+                    <TableColumn fx:id="carNameColumn" text="Автомобиль" prefWidth="190" minWidth="120"/>
+                    <TableColumn fx:id="yearColumn" text="Год" prefWidth="70" minWidth="60"/>
+                    <TableColumn fx:id="mileageColumn" text="Пробег, км" prefWidth="110" minWidth="90"/>
+                    <TableColumn fx:id="priceColumn" text="Цена, ₽" prefWidth="130" minWidth="90"/>
+                    <TableColumn fx:id="carStatusColumn" text="Статус" prefWidth="140" minWidth="100"/>
+                    <TableColumn fx:id="vinColumn" text="VIN" prefWidth="180" minWidth="140"/>
                 </columns>
             </TableView>
         </Tab>
@@ -25,17 +27,17 @@
             <TableView fx:id="relatedRequestsTable">
                 <placeholder><Label text="Связанных заявок нет"/></placeholder>
                 <columns>
-                    <TableColumn fx:id="requestIdColumn" text="№" prefWidth="60"/>
-                    <TableColumn fx:id="userColumn" text="Пользователь" prefWidth="180"/>
-                    <TableColumn fx:id="requestCarColumn" text="Автомобиль" prefWidth="170"/>
-                    <TableColumn fx:id="statusColumn" text="Статус" prefWidth="120"/>
-                    <TableColumn fx:id="messageColumn" text="Сообщение" prefWidth="230"/>
-                    <TableColumn fx:id="createdAtColumn" text="Дата создания" prefWidth="150"/>
+                    <TableColumn fx:id="requestIdColumn" text="№" prefWidth="60" minWidth="50"/>
+                    <TableColumn fx:id="userColumn" text="Пользователь" prefWidth="180" minWidth="120"/>
+                    <TableColumn fx:id="requestCarColumn" text="Автомобиль" prefWidth="170" minWidth="120"/>
+                    <TableColumn fx:id="statusColumn" text="Статус" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="messageColumn" text="Сообщение" prefWidth="230" minWidth="140"/>
+                    <TableColumn fx:id="createdAtColumn" text="Дата создания" prefWidth="150" minWidth="120"/>
                 </columns>
             </TableView>
         </Tab>
     </TabPane>
-    <HBox alignment="CENTER_RIGHT">
+    <HBox alignment="CENTER_RIGHT" styleClass="form-actions">
         <Button text="Закрыть" onAction="#onClose" cancelButton="true"/>
     </HBox>
 </VBox>

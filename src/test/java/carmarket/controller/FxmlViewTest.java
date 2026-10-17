@@ -29,7 +29,6 @@ import carmarket.service.InMemoryPurchaseRequestRepository;
 import carmarket.service.InMemoryUserRepository;
 import carmarket.service.StatisticsService;
 import carmarket.service.SystemStatistics;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -48,11 +47,6 @@ class FxmlViewTest {
         FutureTask<Void> started = new FutureTask<>(() -> null);
         Platform.startup(started);
         started.get(10, TimeUnit.SECONDS);
-    }
-
-    @AfterAll
-    static void stopJavaFx() {
-        Platform.exit();
     }
 
     @Test

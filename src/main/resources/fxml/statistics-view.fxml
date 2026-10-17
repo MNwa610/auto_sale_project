@@ -3,13 +3,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="carmarket.controller.StatisticsController" spacing="12">
+      fx:controller="carmarket.controller.StatisticsController" spacing="12"
+      maxHeight="Infinity" styleClass="tab-content">
     <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
-    <HBox spacing="12" alignment="CENTER_LEFT">
+    <HBox spacing="12" alignment="CENTER_LEFT" styleClass="toolbar">
         <Label text="Статистика по всей базе" styleClass="title-label"/>
         <Button fx:id="refreshStatisticsButton" text="Обновить" onAction="#refresh"/>
     </HBox>
-    <Label text="Поиск и фильтры таблиц не ограничивают эти показатели." wrapText="true"/>
+    <Label text="Поиск и фильтры таблиц не ограничивают эти показатели." wrapText="true"
+           styleClass="hint-label"/>
     <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
         <VBox spacing="16">
             <padding><Insets top="8" right="12" bottom="8" left="0"/></padding>
@@ -18,54 +20,54 @@
                     <ColumnConstraints minWidth="260" hgrow="ALWAYS"/>
                     <ColumnConstraints minWidth="160"/>
                 </columnConstraints>
-                <Label text="Пользователей" GridPane.rowIndex="0"/>
-                <Label fx:id="totalUsersLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                <Label text="Автомобилей" GridPane.rowIndex="1"/>
-                <Label fx:id="totalCarsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                <Label text="Заявок" GridPane.rowIndex="2"/>
-                <Label fx:id="totalRequestsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                <Label text="Средняя цена автомобиля" GridPane.rowIndex="3"/>
-                <Label fx:id="averagePriceLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                <Label text="Средний пробег" GridPane.rowIndex="4"/>
-                <Label fx:id="averageMileageLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-                <Label text="Минимальная цена автомобиля" GridPane.rowIndex="5"/>
-                <Label fx:id="minPriceLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-                <Label text="Максимальная цена автомобиля" GridPane.rowIndex="6"/>
-                <Label fx:id="maxPriceLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-                <Label text="Доля одобренных заявок" GridPane.rowIndex="7"/>
-                <Label fx:id="approvedPercentageLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                <Label text="Пользователей" styleClass="stat-label" GridPane.rowIndex="0"/>
+                <Label fx:id="totalUsersLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="Автомобилей" styleClass="stat-label" GridPane.rowIndex="1"/>
+                <Label fx:id="totalCarsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label text="Заявок" styleClass="stat-label" GridPane.rowIndex="2"/>
+                <Label fx:id="totalRequestsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label text="Средняя цена автомобиля" styleClass="stat-label" GridPane.rowIndex="3"/>
+                <Label fx:id="averagePriceLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Label text="Средний пробег" styleClass="stat-label" GridPane.rowIndex="4"/>
+                <Label fx:id="averageMileageLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                <Label text="Минимальная цена автомобиля" styleClass="stat-label" GridPane.rowIndex="5"/>
+                <Label fx:id="minPriceLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                <Label text="Максимальная цена автомобиля" styleClass="stat-label" GridPane.rowIndex="6"/>
+                <Label fx:id="maxPriceLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                <Label text="Доля одобренных заявок" styleClass="stat-label" GridPane.rowIndex="7"/>
+                <Label fx:id="approvedPercentageLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
             </GridPane>
-            <Label text="Заявки по статусам" styleClass="title-label"/>
+            <Label text="Заявки по статусам" styleClass="section-title"/>
             <GridPane hgap="24" vgap="8">
                 <columnConstraints>
                     <ColumnConstraints minWidth="260" hgrow="ALWAYS"/>
                     <ColumnConstraints minWidth="160"/>
                 </columnConstraints>
-                <Label text="Новые" GridPane.rowIndex="0"/>
-                <Label fx:id="newRequestsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                <Label text="В работе" GridPane.rowIndex="1"/>
-                <Label fx:id="inProgressRequestsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                <Label text="Одобренные" GridPane.rowIndex="2"/>
-                <Label fx:id="approvedRequestsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                <Label text="Отклонённые" GridPane.rowIndex="3"/>
-                <Label fx:id="rejectedRequestsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                <Label text="Отменённые" GridPane.rowIndex="4"/>
-                <Label fx:id="cancelledRequestsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                <Label text="Новые" styleClass="stat-label" GridPane.rowIndex="0"/>
+                <Label fx:id="newRequestsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="В работе" styleClass="stat-label" GridPane.rowIndex="1"/>
+                <Label fx:id="inProgressRequestsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label text="Одобренные" styleClass="stat-label" GridPane.rowIndex="2"/>
+                <Label fx:id="approvedRequestsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label text="Отклонённые" styleClass="stat-label" GridPane.rowIndex="3"/>
+                <Label fx:id="rejectedRequestsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Label text="Отменённые" styleClass="stat-label" GridPane.rowIndex="4"/>
+                <Label fx:id="cancelledRequestsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
             </GridPane>
-            <Label text="Автомобили по статусам" styleClass="title-label"/>
+            <Label text="Автомобили по статусам" styleClass="section-title"/>
             <GridPane hgap="24" vgap="8">
                 <columnConstraints>
                     <ColumnConstraints minWidth="260" hgrow="ALWAYS"/>
                     <ColumnConstraints minWidth="160"/>
                 </columnConstraints>
-                <Label text="Доступные" GridPane.rowIndex="0"/>
-                <Label fx:id="availableCarsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                <Label text="Зарезервированные" GridPane.rowIndex="1"/>
-                <Label fx:id="reservedCarsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                <Label text="Проданные" GridPane.rowIndex="2"/>
-                <Label fx:id="soldCarsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                <Label text="В архиве" GridPane.rowIndex="3"/>
-                <Label fx:id="archivedCarsLabel" text="—" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <Label text="Доступные"  styleClass="stat-label" GridPane.rowIndex="0"/>
+                <Label fx:id="availableCarsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="Зарезервированные" styleClass="stat-label" GridPane.rowIndex="1"/>
+                <Label fx:id="reservedCarsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label text="Проданные" styleClass="stat-label" GridPane.rowIndex="2"/>
+                <Label fx:id="soldCarsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label text="В архиве" styleClass="stat-label" GridPane.rowIndex="3"/>
+                <Label fx:id="archivedCarsLabel" text="—" styleClass="stat-value" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
             </GridPane>
         </VBox>
     </ScrollPane>

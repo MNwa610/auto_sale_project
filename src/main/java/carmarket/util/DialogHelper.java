@@ -30,7 +30,8 @@ public final class DialogHelper {
             Scene scene = new Scene(root);
             scene.getStylesheets().add(DialogHelper.class.getResource("/css/style.css").toExternalForm());
             stage.setScene(scene);
-            stage.setMinWidth(520);
+            stage.setMinWidth(Math.max(520, root.minWidth(-1)));
+            stage.setMinHeight(Math.max(280, root.minHeight(-1)));
             setup.accept(controller);
             stage.showAndWait();
             return controller;

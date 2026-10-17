@@ -58,6 +58,9 @@ public final class AlertHelper {
         dialog.setTitle(title);
         dialog.setHeaderText(null);
         dialog.setContentText("Новый статус:");
+        dialog.getDialogPane().getStyleClass().add("app-dialog");
+        dialog.getDialogPane().getStylesheets().add(
+                AlertHelper.class.getResource("/css/style.css").toExternalForm());
         return dialog.showAndWait().map(label -> options.get(labels.indexOf(label)));
     }
 
@@ -73,5 +76,8 @@ public final class AlertHelper {
         }
         alert.setTitle(title);
         alert.setHeaderText(null);
+        alert.getDialogPane().getStyleClass().add("app-dialog");
+        alert.getDialogPane().getStylesheets().add(
+                AlertHelper.class.getResource("/css/style.css").toExternalForm());
     }
 }
