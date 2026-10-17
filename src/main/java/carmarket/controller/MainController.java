@@ -5,8 +5,10 @@ import carmarket.exception.BusinessException;
 import carmarket.exception.DatabaseException;
 import carmarket.model.Car;
 import carmarket.model.PurchaseRequest;
+import carmarket.model.User;
 import carmarket.service.CarService;
 import carmarket.service.PurchaseRequestService;
+import carmarket.service.UserService;
 import carmarket.util.AlertHelper;
 import carmarket.util.DialogHelper;
 import javafx.beans.property.SimpleObjectProperty;
@@ -28,8 +30,10 @@ public class MainController {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     private final PurchaseRequestService requestService = new PurchaseRequestService();
     private final CarService carService = new CarService();
+    private final UserService userService = new UserService();
     private final ObservableList<PurchaseRequest> requests = FXCollections.observableArrayList();
     private final ObservableList<Car> cars = FXCollections.observableArrayList();
+    private final ObservableList<User> users = FXCollections.observableArrayList();
 
     @FXML private TableView<PurchaseRequest> requestsTable;
     @FXML private TableColumn<PurchaseRequest, Long> idColumn;
@@ -47,6 +51,11 @@ public class MainController {
     @FXML private TableColumn<Car, String> carStatusColumn;
     @FXML private TableColumn<Car, String> sellerColumn;
     @FXML private TableColumn<Car, String> vinColumn;
+    @FXML private TableView<User> usersTable;
+    @FXML private TableColumn<User, String> fullNameColumn;
+    @FXML private TableColumn<User, String> loginColumn;
+    @FXML private TableColumn<User, String> roleColumn;
+    @FXML private TableColumn<User, LocalDateTime> registeredAtColumn;
 
     @FXML
     private void initialize() {
@@ -55,14 +64,7 @@ public class MainController {
         column(carColumn, r -> r.getCarBrand() + " " + r.getCarModel());
         column(statusColumn, r -> r.getStatus().getDisplayName());
         column(messageColumn, PurchaseRequest::getMessage);
-        column(createdAtColumn, PurchaseRequest::getCreatedAt);
-        createdAtColumn.setCellFactory(ignored -> new javafx.scene.control.TableCell<>() {
-            @Override
-            protected void updateItem(LocalDateTime date, boolean empty) {
-                super.updateItem(date, empty);
-                setText(empty || date == null ? null : date.format(DATE_FORMAT));
-            }
-        });
+        dateColumn(createdAtColumn, PurchaseRequest::getCreatedAt);
         column(brandColumn, Car::getBrand);
         column(modelColumn, Car::getModel);
         column(yearColumn, Car::getYear);
@@ -71,22 +73,41 @@ public class MainController {
         column(carStatusColumn, c -> c.getStatus().getDisplayName());
         column(sellerColumn, Car::getSellerFullName);
         column(vinColumn, Car::getVin);
+        column(fullNameColumn, User::getFullName);
+        column(loginColumn, User::getLogin);
+        column(roleColumn, user -> user.getRole().getDisplayName());
+        dateColumn(registeredAtColumn, User::getCreatedAt);
         requestsTable.setItems(requests);
         carsTable.setItems(cars);
+        usersTable.setItems(users);
     }
 
     private <T, V> void column(TableColumn<T, V> column, Function<T, V> value) {
         column.setCellValueFactory(cell -> new SimpleObjectProperty<>(value.apply(cell.getValue())));
     }
 
+    private <T> void dateColumn(TableColumn<T, LocalDateTime> column, Function<T, LocalDateTime> value) {
+        column(column, value);
+        column.setCellFactory(ignored -> new javafx.scene.control.TableCell<>() {
+            @Override
+            protected void updateItem(LocalDateTime date, boolean empty) {
+                super.updateItem(date, empty);
+                setText(empty || date == null ? null : date.format(DATE_FORMAT));
+            }
+        });
+    }
+
     public void refreshAll() {
         // Ошибка БД не должна очищать уже показанные данные.
         List<PurchaseRequest> freshRequests = requestService.findAllWithDetails();
         List<Car> freshCars = carService.findAll();
+        List<User> freshUsers = userService.findAll();
         requests.setAll(freshRequests);
         cars.setAll(freshCars);
+        users.setAll(freshUsers);
         requestsTable.sort();
         carsTable.sort();
+        usersTable.sort();
     }
 
     @FXML private void onRefresh() {
@@ -180,6 +201,38 @@ public class MainController {
                 + car.getBrand() + " " + car.getModel() + "», №" + car.getId() + "?")) {
             perform(() -> {
                 carService.delete(car.getId());
+                refreshAll();
+            });
+        }
+    }
+
+    @FXML private void onAddUser() {
+        perform(() -> openUser(null));
+    }
+
+    @FXML private void onEditUser() {
+        User user = selected(usersTable, "Выберите пользователя для изменения.");
+        if (user != null) {
+            perform(() -> openUser(userService.findById(user.getId())));
+        }
+    }
+
+    private void openUser(User user) {
+        UserDialogController dialog = DialogHelper.show("/fxml/user-dialog.fxml",
+                user == null ? "Добавление пользователя" : "Редактирование пользователя", owner(),
+                (UserDialogController controller) -> controller.setup(user));
+        if (dialog.getSavedId() != null) {
+            refreshAll();
+            selectById(usersTable, dialog.getSavedId(), User::getId);
+        }
+    }
+
+    @FXML private void onDeleteUser() {
+        User user = selected(usersTable, "Выберите пользователя для удаления.");
+        if (user != null && AlertHelper.confirm(owner(), "Удалить пользователя «" + user.getFullName()
+                + "» (" + user.getLogin() + ")?")) {
+            perform(() -> {
+                userService.delete(user.getId());
                 refreshAll();
             });
         }

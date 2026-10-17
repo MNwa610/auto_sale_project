@@ -70,6 +70,23 @@
                     </TableView>
                 </VBox>
             </Tab>
+            <Tab text="Пользователи" closable="false">
+                <VBox spacing="8">
+                    <HBox spacing="8">
+                        <Button text="Добавить" onAction="#onAddUser"/>
+                        <Button text="Изменить" onAction="#onEditUser"/>
+                        <Button text="Удалить" onAction="#onDeleteUser"/>
+                    </HBox>
+                    <TableView fx:id="usersTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="fullNameColumn" text="ФИО" prefWidth="280"/>
+                            <TableColumn fx:id="loginColumn" text="Логин" prefWidth="200"/>
+                            <TableColumn fx:id="roleColumn" text="Роль" prefWidth="180"/>
+                            <TableColumn fx:id="registeredAtColumn" text="Дата регистрации" prefWidth="180"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
         </TabPane>
     </center>
 </BorderPane>

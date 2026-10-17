@@ -2,6 +2,9 @@ package carmarket.controller;
 
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.PasswordField;
+import carmarket.enums.UserRole;
+import carmarket.model.User;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,7 @@ class FxmlViewTest {
     @Test
     void allViews_shouldLoadWithControllersAndEventHandlers() throws Exception {
         FutureTask<Void> load = new FutureTask<>(() -> {
-            for (String resource : new String[]{"main-view.fxml", "request-dialog.fxml", "car-dialog.fxml"}) {
+            for (String resource : new String[]{"main-view.fxml", "request-dialog.fxml", "car-dialog.fxml", "user-dialog.fxml"}) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/" + resource));
                 assertThat((Object) loader.load()).isNotNull();
                 assertThat((Object) loader.getController()).isNotNull();
@@ -36,5 +39,22 @@ class FxmlViewTest {
         });
         Platform.runLater(load);
         load.get(10, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void userDialog_shouldNeverFillPasswordWhenEditing() throws Exception {
+        FutureTask<Void> check = new FutureTask<>(() -> {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/user-dialog.fxml"));
+            loader.load();
+            User user = new User("Иван", "ivan", "stored-password", UserRole.USER);
+            user.setId(1L);
+            UserDialogController controller = loader.getController();
+            controller.setup(user);
+            PasswordField password = (PasswordField) loader.getNamespace().get("passwordField");
+            assertThat(password.getText()).isEmpty();
+            return null;
+        });
+        Platform.runLater(check);
+        check.get(10, TimeUnit.SECONDS);
     }
 }

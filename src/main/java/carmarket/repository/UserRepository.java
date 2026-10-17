@@ -1,6 +1,7 @@
 package carmarket.repository;
 
 import carmarket.enums.UserRole;
+import carmarket.exception.BusinessException;
 import carmarket.exception.DatabaseException;
 import carmarket.model.User;
 import carmarket.util.DatabaseManager;
@@ -9,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,36 +30,36 @@ public class UserRepository {
                 long roleId = findRoleId(connection, user.getRole().name());
 
                 String userSql = "INSERT INTO users (full_name, role_id) VALUES (?, ?) RETURNING id, created_at";
+                long id;
+                LocalDateTime createdAt;
                 try (PreparedStatement statement = connection.prepareStatement(userSql)) {
                     statement.setString(1, user.getFullName());
                     statement.setLong(2, roleId);
 
                     try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            user.setId(resultSet.getLong("id"));
-                            if (resultSet.getTimestamp("created_at") != null) {
-                                user.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                            }
-                        }
+                        resultSet.next();
+                        id = resultSet.getLong("id");
+                        createdAt = resultSet.getTimestamp("created_at").toLocalDateTime();
                     }
                 }
 
                 String credentialsSql = "INSERT INTO user_credentials (user_id, login, password_hash) VALUES (?, ?, ?)";
                 try (PreparedStatement statement = connection.prepareStatement(credentialsSql)) {
-                    statement.setLong(1, user.getId());
+                    statement.setLong(1, id);
                     statement.setString(2, user.getLogin());
                     statement.setString(3, user.getPasswordHash());
                     statement.executeUpdate();
                 }
 
                 connection.commit();
-            } catch (SQLException e) {
-                connection.rollback();
+                user.setId(id);
+                user.setCreatedAt(createdAt);
+            } catch (SQLException | RuntimeException e) {
+                rollback(connection, e);
                 throw e;
-            } finally {
-                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
+            checkLoginConflict(e);
             throw new DatabaseException("Ошибка при создании пользователя", e);
         }
 
@@ -123,19 +125,20 @@ public class UserRepository {
                         statement.setString(1, user.getLogin());
                         statement.setString(2, user.getPasswordHash());
                         statement.setLong(3, user.getId());
-                        statement.executeUpdate();
+                        if (statement.executeUpdate() != 1) {
+                            throw new SQLException("Учётные данные пользователя не найдены");
+                        }
                     }
                 }
 
                 connection.commit();
                 return updated > 0;
-            } catch (SQLException e) {
-                connection.rollback();
+            } catch (SQLException | RuntimeException e) {
+                rollback(connection, e);
                 throw e;
-            } finally {
-                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
+            checkLoginConflict(e);
             throw new DatabaseException("Ошибка при обновлении пользователя", e);
         }
     }
@@ -149,7 +152,53 @@ public class UserRepository {
             statement.setLong(1, id);
             return statement.executeUpdate() > 0;
         } catch (SQLException e) {
+            if ("23503".equals(e.getSQLState())) {
+                throw new BusinessException("Нельзя удалить пользователя: у него есть автомобили или заявки. Обновите таблицу.");
+            }
             throw new DatabaseException("Ошибка при удалении пользователя", e);
+        }
+    }
+
+    public User findByLogin(String login) {
+        String sql = USER_SELECT + " WHERE LOWER(c.login) = LOWER(?)";
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, login);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? mapRow(resultSet) : null;
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Ошибка при поиске пользователя по логину", e);
+        }
+    }
+
+    public boolean hasRelatedRecords(Long userId) {
+        String sql = "SELECT EXISTS (SELECT 1 FROM cars WHERE seller_id = ?) "
+                + "OR EXISTS (SELECT 1 FROM purchase_requests WHERE user_id = ?)";
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            statement.setLong(2, userId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                return resultSet.getBoolean(1);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Ошибка при проверке связей пользователя", e);
+        }
+    }
+
+    private void rollback(Connection connection, Exception original) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackError) {
+            original.addSuppressed(rollbackError);
+        }
+    }
+
+    private void checkLoginConflict(SQLException e) {
+        if ("23505".equals(e.getSQLState())) {
+            throw new BusinessException("Поле «Логин»: этот логин уже занят. Выберите другой.");
         }
     }
 
