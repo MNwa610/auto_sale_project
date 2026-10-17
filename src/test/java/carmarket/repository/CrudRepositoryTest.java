@@ -64,18 +64,20 @@ class CrudRepositoryTest {
         CarRepository carRepository = new CarRepository();
 
         User seller = userRepository.findAll().get(0);
+        CatalogRepository catalogs = new CatalogRepository();
+        carmarket.model.CarModel model = catalogs.findAllModels().get(0);
 
         Car car = new Car(
                 seller.getId(),
-                "TestBrand",
-                "TestModel",
+                model.getBrandName(),
+                model.getName(),
                 2020,
                 50000,
                 new BigDecimal("1000000.00"),
                 null,
-                "sedan",
-                "automatic",
-                "petrol",
+                catalogs.findAllBodyTypes().get(0).getName(),
+                catalogs.findAllTransmissions().get(0).getName(),
+                catalogs.findAllFuelTypes().get(0).getName(),
                 new BigDecimal("2.0"),
                 "Тестовый автомобиль",
                 CarStatus.AVAILABLE
@@ -85,7 +87,7 @@ class CrudRepositoryTest {
         assertNotNull(created.getId());
 
         Car found = carRepository.findById(created.getId());
-        assertEquals("TestBrand", found.getBrand());
+        assertEquals(model.getBrandName(), found.getBrand());
 
         found.setMileage(55000);
         assertTrue(carRepository.update(found));

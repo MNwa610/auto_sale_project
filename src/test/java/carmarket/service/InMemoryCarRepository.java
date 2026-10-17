@@ -41,6 +41,12 @@ public class InMemoryCarRepository extends CarRepository {
     }
 
     @Override
+    public Car findByVin(String vin) {
+        return cars.stream().filter(car -> car.getVin() != null && car.getVin().equalsIgnoreCase(vin))
+                .findFirst().orElse(null);
+    }
+
+    @Override
     public boolean update(Car car) {
         for (int i = 0; i < cars.size(); i++) {
             if (cars.get(i).getId().equals(car.getId())) {

@@ -9,6 +9,7 @@ public class Car {
 
     private Long id;
     private Long sellerId;
+    private String sellerFullName;
     private String brand;
     private String model;
     private int year;
@@ -58,6 +59,14 @@ public class Car {
 
     public void setSellerId(Long sellerId) {
         this.sellerId = sellerId;
+    }
+
+    public String getSellerFullName() {
+        return sellerFullName;
+    }
+
+    public void setSellerFullName(String sellerFullName) {
+        this.sellerFullName = sellerFullName;
     }
 
     public String getBrand() {

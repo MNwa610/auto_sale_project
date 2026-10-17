@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="carmarket.controller.CarDialogController" spacing="12" prefWidth="640" prefHeight="650">
+    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+    <Label text="Данные автомобиля" styleClass="title-label"/>
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+        <GridPane hgap="12" vgap="10">
+            <padding><Insets top="8" right="12" bottom="8" left="0"/></padding>
+            <columnConstraints>
+                <ColumnConstraints minWidth="155"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+            <Label text="Продавец" GridPane.rowIndex="0"/>
+            <ComboBox fx:id="sellerBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <Label text="Марка" GridPane.rowIndex="1"/>
+            <ComboBox fx:id="brandBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <Label text="Модель" GridPane.rowIndex="2"/>
+            <ComboBox fx:id="modelBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            <Label text="Год выпуска" GridPane.rowIndex="3"/>
+            <TextField fx:id="yearField" promptText="Например, 2020" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+            <Label text="Пробег, км" GridPane.rowIndex="4"/>
+            <TextField fx:id="mileageField" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+            <Label text="Цена, ₽" GridPane.rowIndex="5"/>
+            <TextField fx:id="priceField" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+            <Label text="Статус" GridPane.rowIndex="6"/>
+            <ComboBox fx:id="statusBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+            <Label text="VIN (необязательно)" GridPane.rowIndex="7"/>
+            <TextField fx:id="vinField" promptText="17 символов или пусто" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+            <Label text="Кузов" GridPane.rowIndex="8"/>
+            <ComboBox fx:id="bodyBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+            <Label text="Коробка передач" GridPane.rowIndex="9"/>
+            <ComboBox fx:id="transmissionBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="9"/>
+            <Label text="Топливо" GridPane.rowIndex="10"/>
+            <ComboBox fx:id="fuelBox" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="10"/>
+            <Label text="Объём двигателя, л" GridPane.rowIndex="11"/>
+            <TextField fx:id="engineField" promptText="Например, 1,6" GridPane.columnIndex="1" GridPane.rowIndex="11"/>
+            <Label text="Описание" GridPane.rowIndex="12"/>
+            <TextArea fx:id="descriptionArea" wrapText="true" prefRowCount="3"
+                      GridPane.columnIndex="1" GridPane.rowIndex="12"/>
+        </GridPane>
+    </ScrollPane>
+    <HBox spacing="8" alignment="CENTER_RIGHT">
+        <Button text="Сохранить" onAction="#onSave" defaultButton="true"/>
+        <Button text="Отмена" onAction="#onCancel" cancelButton="true"/>
+    </HBox>
+</VBox>

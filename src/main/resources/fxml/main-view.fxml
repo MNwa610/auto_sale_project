@@ -30,7 +30,14 @@
     <center>
         <TabPane tabClosingPolicy="UNAVAILABLE">
             <Tab text="Заявки" closable="false">
-                <TableView fx:id="requestsTable">
+                <VBox spacing="8">
+                    <HBox spacing="8">
+                        <Button text="Добавить" onAction="#onAddRequest"/>
+                        <Button text="Изменить" onAction="#onEditRequest"/>
+                        <Button text="Удалить" onAction="#onDeleteRequest"/>
+                        <Button text="Сменить статус" onAction="#onChangeStatus"/>
+                    </HBox>
+                <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="idColumn" text="№" prefWidth="60"/>
                         <TableColumn fx:id="userColumn" text="Пользователь" prefWidth="180"/>
@@ -40,6 +47,28 @@
                         <TableColumn fx:id="createdAtColumn" text="Дата создания" prefWidth="150"/>
                     </columns>
                 </TableView>
+                </VBox>
+            </Tab>
+            <Tab text="Автомобили" closable="false">
+                <VBox spacing="8">
+                    <HBox spacing="8">
+                        <Button text="Добавить" onAction="#onAddCar"/>
+                        <Button text="Изменить" onAction="#onEditCar"/>
+                        <Button text="Удалить" onAction="#onDeleteCar"/>
+                    </HBox>
+                    <TableView fx:id="carsTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="brandColumn" text="Марка" prefWidth="110"/>
+                            <TableColumn fx:id="modelColumn" text="Модель" prefWidth="130"/>
+                            <TableColumn fx:id="yearColumn" text="Год" prefWidth="70"/>
+                            <TableColumn fx:id="mileageColumn" text="Пробег, км" prefWidth="100"/>
+                            <TableColumn fx:id="priceColumn" text="Цена, ₽" prefWidth="130"/>
+                            <TableColumn fx:id="carStatusColumn" text="Статус" prefWidth="130"/>
+                            <TableColumn fx:id="sellerColumn" text="Продавец" prefWidth="180"/>
+                            <TableColumn fx:id="vinColumn" text="VIN" prefWidth="180"/>
+                        </columns>
+                    </TableView>
+                </VBox>
             </Tab>
         </TabPane>
     </center>

@@ -32,6 +32,7 @@ public class PurchaseRequestService {
     }
 
     public PurchaseRequest create(PurchaseRequest request) {
+        validateInput(request);
         validateUserExists(request.getUserId());
         Car car = validateCarForRequest(request.getCarId());
 
@@ -47,9 +48,7 @@ public class PurchaseRequestService {
             );
         }
 
-        if (request.getStatus() == null) {
-            request.setStatus(RequestStatus.NEW);
-        }
+        request.setStatus(RequestStatus.NEW);
 
         return purchaseRequestRepository.create(request);
     }
@@ -67,6 +66,7 @@ public class PurchaseRequestService {
     }
 
     public PurchaseRequest update(PurchaseRequest request) {
+        validateInput(request);
         PurchaseRequest existing = purchaseRequestRepository.findById(request.getId());
         if (existing == null) {
             throw new EntityNotFoundException(
@@ -103,8 +103,44 @@ public class PurchaseRequestService {
             }
         }
 
-        purchaseRequestRepository.update(request);
+        if (!purchaseRequestRepository.update(request)) {
+            throw new EntityNotFoundException("Заявка уже удалена. Обновите таблицу.");
+        }
         return request;
+    }
+
+    public List<RequestStatus> allowedStatuses(RequestStatus status) {
+        if (status == null) {
+            return List.of();
+        }
+        return switch (status) {
+            case NEW -> List.of(RequestStatus.IN_PROGRESS, RequestStatus.CANCELLED);
+            case IN_PROGRESS -> List.of(RequestStatus.APPROVED, RequestStatus.REJECTED, RequestStatus.CANCELLED);
+            default -> List.of();
+        };
+    }
+
+    public void changeStatus(Long id, RequestStatus status) {
+        PurchaseRequest request = findById(id);
+        validateStatusTransition(request.getStatus(), status);
+        request.setStatus(status);
+        update(request);
+    }
+
+    private void validateInput(PurchaseRequest request) {
+        if (request == null) {
+            throw new BusinessException("Заполните форму заявки.");
+        }
+        if (request.getUserId() == null) {
+            throw new BusinessException("Поле «Пользователь»: выберите пользователя из списка.");
+        }
+        if (request.getCarId() == null) {
+            throw new BusinessException("Поле «Автомобиль»: выберите автомобиль из списка.");
+        }
+        if (request.getMessage() != null && request.getMessage().length() > 1000) {
+            throw new BusinessException("Поле «Сообщение»: не более 1000 символов, сейчас "
+                    + request.getMessage().length() + ".");
+        }
     }
 
     public void delete(Long id) {
@@ -207,18 +243,7 @@ public class PurchaseRequestService {
             return;
         }
 
-        boolean allowed = false;
-
-        if (from == RequestStatus.NEW) {
-            allowed = to == RequestStatus.IN_PROGRESS
-                    || to == RequestStatus.CANCELLED;
-        } else if (from == RequestStatus.IN_PROGRESS) {
-            allowed = to == RequestStatus.APPROVED
-                    || to == RequestStatus.REJECTED
-                    || to == RequestStatus.CANCELLED;
-        }
-
-        if (!allowed) {
+        if (to == null || !allowedStatuses(from).contains(to)) {
             throw new BusinessException(
                     "Недопустимый переход статуса: " + from + " -> " + to
             );

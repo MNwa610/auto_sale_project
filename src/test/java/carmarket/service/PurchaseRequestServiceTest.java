@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -161,5 +164,30 @@ class PurchaseRequestServiceTest {
         );
         copy.setId(source.getId());
         return copy;
+    }
+
+    @Test
+    void create_shouldRejectMissingSelectionsAndLongMessage() {
+        PurchaseRequest request = new PurchaseRequest(null, availableCarId, "", RequestStatus.NEW);
+        assertThatThrownBy(() -> requestService.create(request)).hasMessageContaining("«Пользователь»");
+        request.setUserId(userId);
+        request.setCarId(null);
+        assertThatThrownBy(() -> requestService.create(request)).hasMessageContaining("«Автомобиль»");
+        request.setCarId(availableCarId);
+        request.setMessage("а".repeat(1001));
+        assertThatThrownBy(() -> requestService.create(request)).hasMessageContaining("сейчас 1001");
+    }
+
+    @Test
+    void changeStatus_shouldOfferOnlyAllowedTransitionsAndRejectFinalStatus() {
+        PurchaseRequest request = requestService.create(
+                new PurchaseRequest(userId, availableCarId, "", RequestStatus.NEW));
+        assertThat(requestService.allowedStatuses(RequestStatus.NEW))
+                .containsExactly(RequestStatus.IN_PROGRESS, RequestStatus.CANCELLED);
+        requestService.changeStatus(request.getId(), RequestStatus.IN_PROGRESS);
+        requestService.changeStatus(request.getId(), RequestStatus.APPROVED);
+        assertThat(requestService.allowedStatuses(RequestStatus.APPROVED)).isEmpty();
+        assertThatThrownBy(() -> requestService.changeStatus(request.getId(), RequestStatus.CANCELLED))
+                .isInstanceOf(BusinessException.class);
     }
 }
