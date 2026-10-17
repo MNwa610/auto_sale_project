@@ -22,6 +22,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tab;
 import javafx.stage.Window;
 
 import java.io.UncheckedIOException;
@@ -75,6 +76,8 @@ public class MainController {
     @FXML private TableColumn<User, String> loginColumn;
     @FXML private TableColumn<User, String> roleColumn;
     @FXML private TableColumn<User, LocalDateTime> registeredAtColumn;
+    @FXML private Tab statisticsTab;
+    @FXML private StatisticsController statisticsViewController;
 
     public MainController() {
         this(new PurchaseRequestService(), new CarService(), new UserService());
@@ -212,7 +215,17 @@ public class MainController {
     }
 
     @FXML private void onRefresh() {
-        perform(this::refreshAll);
+        if (statisticsTab.isSelected()) {
+            statisticsViewController.refresh();
+        } else {
+            perform(this::refreshAll);
+        }
+    }
+
+    @FXML private void onStatisticsSelected() {
+        if (statisticsTab != null && statisticsTab.isSelected()) {
+            statisticsViewController.refresh();
+        }
     }
 
     @FXML private void onAddRequest() {

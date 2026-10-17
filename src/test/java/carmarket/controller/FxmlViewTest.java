@@ -27,6 +27,8 @@ import carmarket.service.UserService;
 import carmarket.service.InMemoryCarRepository;
 import carmarket.service.InMemoryPurchaseRequestRepository;
 import carmarket.service.InMemoryUserRepository;
+import carmarket.service.StatisticsService;
+import carmarket.service.SystemStatistics;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,7 +59,7 @@ class FxmlViewTest {
     void allViews_shouldLoadWithControllersAndEventHandlers() throws Exception {
         FutureTask<Void> load = new FutureTask<>(() -> {
             for (String resource : new String[]{"main-view.fxml", "request-dialog.fxml", "car-dialog.fxml",
-                    "user-dialog.fxml", "request-details.fxml", "related-data.fxml"}) {
+                    "user-dialog.fxml", "request-details.fxml", "related-data.fxml", "statistics-view.fxml"}) {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/" + resource));
                 assertThat((Object) loader.load()).isNotNull();
                 assertThat((Object) loader.getController()).isNotNull();
@@ -109,7 +112,8 @@ class FxmlViewTest {
             MainController controller = new MainController(new PurchaseRequestService(requests, users, cars),
                     new CarService(cars, users), new UserService(users));
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-view.fxml"));
-            loader.setControllerFactory(type -> controller);
+            loader.setControllerFactory(type -> type == MainController.class ? controller
+                    : new StatisticsController(new StatisticsService(users, cars, requests)));
             Parent root = loader.load();
             new Scene(root);
             controller.refreshAll();
@@ -232,5 +236,116 @@ class FxmlViewTest {
         request.setCreatedAt(LocalDateTime.of(2026, 1, 1, 10, 0));
         request.setUpdatedAt(LocalDateTime.of(2026, 1, 2, 12, 30));
         return new RequestDetails(request, user, car);
+    }
+
+    @Test
+    void statisticsView_shouldShowAllIndicatorsAndRefreshAfterChanges() throws Exception {
+        FutureTask<Void> check = new FutureTask<>(() -> {
+            InMemoryUserRepository users = new InMemoryUserRepository();
+            InMemoryCarRepository cars = new InMemoryCarRepository();
+            InMemoryPurchaseRequestRepository requests = new InMemoryPurchaseRequestRepository();
+            users.seed(new User("Иван", "ivan", "password", UserRole.USER));
+            int count = 1;
+            for (CarStatus status : CarStatus.values()) {
+                for (int i = 0; i < count; i++) {
+                    Car car = sampleDetails().car();
+                    car.setId(null);
+                    car.setVin(null);
+                    car.setStatus(status);
+                    cars.seed(car);
+                }
+                count++;
+            }
+            count = 1;
+            for (RequestStatus status : RequestStatus.values()) {
+                for (int i = 0; i < count; i++) {
+                    requests.seed(new PurchaseRequest(1L, 1L, "", status));
+                }
+                count++;
+            }
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/statistics-view.fxml"));
+            loader.setControllerFactory(type -> new StatisticsController(new StatisticsService(users, cars, requests)));
+            Parent root = loader.load();
+            new Scene(root);
+            var nodes = loader.getNamespace();
+            Button refresh = (Button) nodes.get("refreshStatisticsButton");
+            assertThat(((Label) nodes.get("totalUsersLabel")).getText()).isEqualTo("—");
+            refresh.fire();
+            Map<String, String> expected = Map.ofEntries(Map.entry("totalUsersLabel", "1"),
+                    Map.entry("totalCarsLabel", "10"), Map.entry("totalRequestsLabel", "15"),
+                    Map.entry("newRequestsLabel", "1"), Map.entry("inProgressRequestsLabel", "2"),
+                    Map.entry("approvedRequestsLabel", "3"), Map.entry("rejectedRequestsLabel", "4"),
+                    Map.entry("cancelledRequestsLabel", "5"), Map.entry("availableCarsLabel", "1"),
+                    Map.entry("reservedCarsLabel", "2"), Map.entry("soldCarsLabel", "3"), Map.entry("archivedCarsLabel", "4"),
+                    Map.entry("averagePriceLabel", "850000,00 ₽"), Map.entry("averageMileageLabel", "45000,00 км"),
+                    Map.entry("minPriceLabel", "850000,00 ₽"), Map.entry("maxPriceLabel", "850000,00 ₽"),
+                    Map.entry("approvedPercentageLabel", "20,00 %"));
+            expected.forEach((id, value) -> assertThat(((Label) nodes.get(id)).getText()).as(id).isEqualTo(value));
+            requests.seed(new PurchaseRequest(1L, 1L, "", RequestStatus.NEW));
+            refresh.fire();
+            assertThat(((Label) nodes.get("totalRequestsLabel")).getText()).isEqualTo("16");
+            assertThat(((Label) nodes.get("newRequestsLabel")).getText()).isEqualTo("2");
+            assertThat(((Label) nodes.get("approvedPercentageLabel")).getText()).isEqualTo("18,75 %");
+
+            cars.findAll().forEach(car -> cars.delete(car.getId()));
+            users.findAll().forEach(user -> users.delete(user.getId()));
+            requests.findAll().forEach(request -> requests.delete(request.getId()));
+            refresh.fire();
+            assertThat(((Label) nodes.get("totalCarsLabel")).getText()).isEqualTo("0");
+            assertThat(((Label) nodes.get("averagePriceLabel")).getText()).isEqualTo("—");
+            assertThat(((Label) nodes.get("averageMileageLabel")).getText()).isEqualTo("—");
+            assertThat(((Label) nodes.get("minPriceLabel")).getText()).isEqualTo("—");
+            assertThat(((Label) nodes.get("maxPriceLabel")).getText()).isEqualTo("—");
+            assertThat(((Label) nodes.get("approvedPercentageLabel")).getText()).isEqualTo("0,00 %");
+            return null;
+        });
+        Platform.runLater(check);
+        check.get(10, TimeUnit.SECONDS);
+    }
+
+    @Test
+    void statisticsTab_shouldLoadOnSelectionAndIgnoreMainSearch() throws Exception {
+        FutureTask<Void> check = new FutureTask<>(() -> {
+            InMemoryUserRepository users = new InMemoryUserRepository();
+            InMemoryCarRepository cars = new InMemoryCarRepository();
+            InMemoryPurchaseRequestRepository requests = new InMemoryPurchaseRequestRepository();
+            users.seed(new User("Иван", "ivan", "password", UserRole.USER));
+            Car car = sampleDetails().car();
+            car.setId(null);
+            cars.seed(car);
+            requests.seed(new PurchaseRequest(1L, 1L, "Заявка", RequestStatus.NEW));
+            SystemStatistics[] loaded = new SystemStatistics[1];
+            int[] loadCount = {0};
+            StatisticsService service = new StatisticsService(users, cars, requests) {
+                @Override public SystemStatistics load() {
+                    loadCount[0]++;
+                    loaded[0] = super.load();
+                    return loaded[0];
+                }
+            };
+            MainController main = new MainController(new PurchaseRequestService(requests, users, cars),
+                    new CarService(cars, users), new UserService(users));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main-view.fxml"));
+            loader.setControllerFactory(type -> type == MainController.class ? main : new StatisticsController(service));
+            Parent root = loader.load();
+            new Scene(root);
+            assertThat(loadCount[0]).isZero();
+            ((TextField) loader.getNamespace().get("requestSearchField")).setText("несуществующее");
+            ((Button) loader.getNamespace().get("applyRequestsButton")).fire();
+            TableView<?> table = (TableView<?>) loader.getNamespace().get("requestsTable");
+            assertThat(table.getItems()).isEmpty();
+            javafx.scene.control.Tab tab = (javafx.scene.control.Tab) loader.getNamespace().get("statisticsTab");
+            tab.getTabPane().getSelectionModel().select(tab);
+            assertThat(loadCount[0]).isEqualTo(1);
+            assertThat(loaded[0].totalRequests()).isEqualTo(1);
+            tab.getTabPane().getSelectionModel().selectFirst();
+            requests.seed(new PurchaseRequest(1L, 1L, "", RequestStatus.APPROVED));
+            tab.getTabPane().getSelectionModel().select(tab);
+            assertThat(loadCount[0]).isEqualTo(2);
+            assertThat(loaded[0].totalRequests()).isEqualTo(2);
+            return null;
+        });
+        Platform.runLater(check);
+        check.get(10, TimeUnit.SECONDS);
     }
 }

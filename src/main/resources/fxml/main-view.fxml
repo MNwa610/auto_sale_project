@@ -123,6 +123,9 @@
                     </TableView>
                 </VBox>
             </Tab>
+            <Tab fx:id="statisticsTab" text="Статистика" closable="false" onSelectionChanged="#onStatisticsSelected">
+                <fx:include fx:id="statisticsView" source="statistics-view.fxml"/>
+            </Tab>
         </TabPane>
     </center>
 </BorderPane>
