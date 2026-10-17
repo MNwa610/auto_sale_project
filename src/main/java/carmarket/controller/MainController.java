@@ -12,6 +12,7 @@ import carmarket.model.RequestDetails;
 import carmarket.service.CarService;
 import carmarket.service.PurchaseRequestService;
 import carmarket.service.UserService;
+import carmarket.service.DataExportService;
 import carmarket.util.AlertHelper;
 import carmarket.util.DialogHelper;
 import javafx.collections.FXCollections;
@@ -24,12 +25,16 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tab;
 import javafx.stage.Window;
+import javafx.stage.FileChooser;
 
 import java.io.UncheckedIOException;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Consumer;
+import java.nio.file.Path;
 
 import static carmarket.util.TableHelper.column;
 import static carmarket.util.TableHelper.dateColumn;
@@ -38,6 +43,7 @@ public class MainController {
     private final PurchaseRequestService requestService;
     private final CarService carService;
     private final UserService userService;
+    private final DataExportService exportService = new DataExportService();
     private final ObservableList<PurchaseRequest> requests = FXCollections.observableArrayList();
     private final ObservableList<Car> cars = FXCollections.observableArrayList();
     private final ObservableList<User> users = FXCollections.observableArrayList();
@@ -226,6 +232,45 @@ public class MainController {
         if (statisticsTab != null && statisticsTab.isSelected()) {
             statisticsViewController.refresh();
         }
+    }
+
+    @FXML private void onExportRequests() {
+        List<PurchaseRequest> snapshot = List.copyOf(requestsTable.getItems());
+        exportFile("Заявки", file -> exportService.exportRequests(file, snapshot));
+    }
+
+    @FXML private void onExportCars() {
+        List<Car> snapshot = List.copyOf(carsTable.getItems());
+        exportFile("Автомобили", file -> exportService.exportCars(file, snapshot));
+    }
+
+    @FXML private void onExportUsers() {
+        List<User> snapshot = List.copyOf(usersTable.getItems());
+        exportFile("Пользователи", file -> exportService.exportUsers(file, snapshot));
+    }
+
+    private void exportFile(String suggestedName, Consumer<Path> export) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Экспорт: " + suggestedName);
+        FileChooser.ExtensionFilter xlsx = new FileChooser.ExtensionFilter("Книга Excel (*.xlsx)", "*.xlsx");
+        FileChooser.ExtensionFilter csv = new FileChooser.ExtensionFilter("CSV (*.csv)", "*.csv");
+        chooser.getExtensionFilters().setAll(xlsx, csv);
+        chooser.setSelectedExtensionFilter(xlsx);
+        chooser.setInitialFileName(suggestedName);
+        File selected = chooser.showSaveDialog(owner());
+        if (selected == null) {
+            return;
+        }
+        perform(() -> {
+            String extension = chooser.getSelectedExtensionFilter() == csv ? ".csv" : ".xlsx";
+            Path file = exportService.completeFileName(selected.toPath(), extension);
+            if (exportService.needsOverwriteConfirmation(selected.toPath(), file)
+                    && !AlertHelper.confirm(owner(), "Замена файла", "Файл уже существует. Заменить его?\n" + file)) {
+                return;
+            }
+            export.accept(file);
+            AlertHelper.information(owner(), "Файл сохранён:\n" + file.toAbsolutePath());
+        });
     }
 
     @FXML private void onAddRequest() {

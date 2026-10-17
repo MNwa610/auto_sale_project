@@ -40,6 +40,7 @@
                         <Button text="Удалить" onAction="#onDeleteRequest"/>
                         <Button text="Сменить статус" onAction="#onChangeStatus"/>
                         <Button text="Подробнее" onAction="#onRequestDetails"/>
+                        <Button text="Экспорт" onAction="#onExportRequests"/>
                     </HBox>
                     <FlowPane hgap="8" vgap="8">
                         <Label text="Поиск"/>
@@ -80,6 +81,7 @@
                         <Button text="Изменить" onAction="#onEditCar"/>
                         <Button text="Удалить" onAction="#onDeleteCar"/>
                         <Button text="Заявки на автомобиль" onAction="#onCarRequests"/>
+                        <Button text="Экспорт" onAction="#onExportCars"/>
                     </HBox>
                     <FlowPane hgap="8" vgap="8">
                         <Label text="Поиск"/>
@@ -112,6 +114,7 @@
                         <Button text="Изменить" onAction="#onEditUser"/>
                         <Button text="Удалить" onAction="#onDeleteUser"/>
                         <Button text="Автомобили и заявки" onAction="#onUserRelations"/>
+                        <Button text="Экспорт" onAction="#onExportUsers"/>
                     </HBox>
                     <TableView fx:id="usersTable" VBox.vgrow="ALWAYS">
                         <columns>

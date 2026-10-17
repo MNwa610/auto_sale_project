@@ -40,10 +40,14 @@ public final class AlertHelper {
     }
 
     public static boolean confirm(Window owner, String message) {
+        return confirm(owner, "Подтверждение удаления", message);
+    }
+
+    public static boolean confirm(Window owner, String title, String message) {
         ButtonType yes = new ButtonType("Да");
         ButtonType no = new ButtonType("Нет", javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE);
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, message, yes, no);
-        configure(alert, owner, "Подтверждение удаления");
+        configure(alert, owner, title);
         return alert.showAndWait().orElse(no) == yes;
     }
 
