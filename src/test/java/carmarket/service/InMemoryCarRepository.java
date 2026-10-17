@@ -31,6 +31,11 @@ public class InMemoryCarRepository extends CarRepository {
     }
 
     @Override
+    public List<Car> findBySellerId(Long sellerId) {
+        return cars.stream().filter(car -> sellerId.equals(car.getSellerId())).toList();
+    }
+
+    @Override
     public Car findById(Long id) {
         for (Car car : cars) {
             if (car.getId().equals(id)) {

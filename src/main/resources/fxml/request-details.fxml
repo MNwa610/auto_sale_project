@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="carmarket.controller.RequestDetailsController" spacing="12" prefWidth="660" prefHeight="640">
+    <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+    <Label fx:id="titleLabel" styleClass="title-label"/>
+    <TextArea fx:id="detailsArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Закрыть" onAction="#onClose" cancelButton="true"/>
+    </HBox>
+</VBox>

@@ -75,15 +75,26 @@ public class CarRepository {
     }
 
     public List<Car> findAll() {
+        return findList(CAR_SELECT + " ORDER BY c.id", null);
+    }
+
+    public List<Car> findBySellerId(Long sellerId) {
+        return findList(CAR_SELECT + " WHERE c.seller_id = ? ORDER BY c.id", sellerId);
+    }
+
+    private List<Car> findList(String sql, Long sellerId) {
         List<Car> cars = new ArrayList<>();
-        String sql = CAR_SELECT + " ORDER BY c.id";
 
         try (Connection connection = DatabaseManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            while (resultSet.next()) {
-                cars.add(mapRow(resultSet));
+            if (sellerId != null) {
+                statement.setLong(1, sellerId);
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    cars.add(mapRow(resultSet));
+                }
             }
         } catch (SQLException e) {
             throw new DatabaseException("Ошибка при получении списка автомобилей", e);

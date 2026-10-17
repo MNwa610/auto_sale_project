@@ -10,6 +10,7 @@ import carmarket.model.Car;
 import carmarket.model.PurchaseRequest;
 import carmarket.model.User;
 import carmarket.model.TableQuery;
+import carmarket.model.RequestDetails;
 import carmarket.repository.CarRepository;
 import carmarket.repository.PurchaseRequestRepository;
 import carmarket.repository.UserRepository;
@@ -68,6 +69,13 @@ public class PurchaseRequestService implements Searchable<PurchaseRequest> {
             throw new EntityNotFoundException("Заявка с id=" + id + " не найдена");
         }
         return request;
+    }
+
+    public RequestDetails getDetails(Long id) {
+        PurchaseRequest request = findById(id);
+        User user = validateUserExists(request.getUserId());
+        Car car = validateCarForRequest(request.getCarId());
+        return new RequestDetails(request, user, car);
     }
 
     public PurchaseRequest update(PurchaseRequest request) {
@@ -231,13 +239,14 @@ public class PurchaseRequestService implements Searchable<PurchaseRequest> {
         return result;
     }
 
-    private void validateUserExists(Long userId) {
+    private User validateUserExists(Long userId) {
         User user = userRepository.findById(userId);
         if (user == null) {
             throw new EntityNotFoundException(
                     "Пользователь с id=" + userId + " не найден"
             );
         }
+        return user;
     }
 
     private Car validateCarForRequest(Long carId) {

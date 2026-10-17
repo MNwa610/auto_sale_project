@@ -53,6 +53,11 @@ public class CarService implements Searchable<Car> {
         return carRepository.findAll();
     }
 
+    public List<Car> findBySellerId(Long sellerId) {
+        checkSellerExists(sellerId);
+        return carRepository.findBySellerId(sellerId);
+    }
+
     public Car findById(Long id) {
         Car car = carRepository.findById(id);
         if (car == null) {

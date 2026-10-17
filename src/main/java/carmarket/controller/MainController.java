@@ -8,12 +8,12 @@ import carmarket.model.Car;
 import carmarket.model.PurchaseRequest;
 import carmarket.model.User;
 import carmarket.model.TableQuery;
+import carmarket.model.RequestDetails;
 import carmarket.service.CarService;
 import carmarket.service.PurchaseRequestService;
 import carmarket.service.UserService;
 import carmarket.util.AlertHelper;
 import carmarket.util.DialogHelper;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -27,12 +27,13 @@ import javafx.stage.Window;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.Function;
 
+import static carmarket.util.TableHelper.column;
+import static carmarket.util.TableHelper.dateColumn;
+
 public class MainController {
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     private final PurchaseRequestService requestService;
     private final CarService carService;
     private final UserService userService;
@@ -197,21 +198,6 @@ public class MainController {
         });
     }
 
-    private <T, V> void column(TableColumn<T, V> column, Function<T, V> value) {
-        column.setCellValueFactory(cell -> new SimpleObjectProperty<>(value.apply(cell.getValue())));
-    }
-
-    private <T> void dateColumn(TableColumn<T, LocalDateTime> column, Function<T, LocalDateTime> value) {
-        column(column, value);
-        column.setCellFactory(ignored -> new javafx.scene.control.TableCell<>() {
-            @Override
-            protected void updateItem(LocalDateTime date, boolean empty) {
-                super.updateItem(date, empty);
-                setText(empty || date == null ? null : date.format(DATE_FORMAT));
-            }
-        });
-    }
-
     public void refreshAll() {
         // Ошибка БД не должна очищать уже показанные данные.
         List<PurchaseRequest> freshRequests = requestService.findForTable(requestQuery);
@@ -231,6 +217,17 @@ public class MainController {
 
     @FXML private void onAddRequest() {
         perform(() -> openRequest(null));
+    }
+
+    @FXML private void onRequestDetails() {
+        PurchaseRequest request = selected(requestsTable, "Выберите заявку для просмотра подробностей.");
+        if (request != null) {
+            perform(() -> {
+                RequestDetails details = requestService.getDetails(request.getId());
+                DialogHelper.show("/fxml/request-details.fxml", "Заявка №" + request.getId(), owner(),
+                        (RequestDetailsController controller) -> controller.setup(details));
+            });
+        }
     }
 
     @FXML private void onEditRequest() {
@@ -293,6 +290,18 @@ public class MainController {
         perform(() -> openCar(null));
     }
 
+    @FXML private void onCarRequests() {
+        Car selected = selected(carsTable, "Выберите автомобиль для просмотра заявок.");
+        if (selected != null) {
+            perform(() -> {
+                Car car = carService.findById(selected.getId());
+                List<PurchaseRequest> relatedRequests = requestService.findByCarId(car.getId());
+                DialogHelper.show("/fxml/related-data.fxml", "Заявки на автомобиль", owner(),
+                        (RelatedDataController controller) -> controller.setupForCar(car, relatedRequests));
+            });
+        }
+    }
+
     @FXML private void onEditCar() {
         Car selected = selected(carsTable, "Выберите автомобиль для изменения.");
         if (selected != null) {
@@ -323,6 +332,19 @@ public class MainController {
 
     @FXML private void onAddUser() {
         perform(() -> openUser(null));
+    }
+
+    @FXML private void onUserRelations() {
+        User selected = selected(usersTable, "Выберите пользователя для просмотра связанных данных.");
+        if (selected != null) {
+            perform(() -> {
+                User user = userService.findById(selected.getId());
+                List<Car> relatedCars = carService.findBySellerId(user.getId());
+                List<PurchaseRequest> relatedRequests = requestService.findByUserId(user.getId());
+                DialogHelper.show("/fxml/related-data.fxml", "Автомобили и заявки пользователя", owner(),
+                        (RelatedDataController controller) -> controller.setupForUser(user, relatedCars, relatedRequests));
+            });
+        }
     }
 
     @FXML private void onEditUser() {
