@@ -4,7 +4,7 @@
 
 КР №3 развивается в отдельном проекте [`backend/`](backend/README.md): Spring Boot REST API
 для веб-интерфейса и будущего Android-клиента. Добавлены каркас, PostgreSQL,
-миграции Flyway и JPA с проверкой схемы (этапы 1–2); авторизация — следующий этап.
+миграции Flyway, JPA с проверкой схемы и авторизация с JWT/refresh (этапы 1–3).
 План и границы этапов: [`docs/KR3_PROGRESS.md`](docs/KR3_PROGRESS.md).
 Команды Maven ниже относятся к JavaFX КР №2; для backend используется
 `mvn -f backend/pom.xml ...`.

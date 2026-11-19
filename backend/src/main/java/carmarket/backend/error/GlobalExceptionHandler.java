@@ -27,6 +27,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(AuthFailure.class)
+    public ResponseEntity<ProblemDetail> handleAuthFailure(AuthFailure exception, HttpServletRequest request) {
+        ProblemDetail detail = problem(exception.getStatus(), exception.getMessage());
+        detail.setProperty("code", exception.getCode());
+        detail.setInstance(URI.create(request.getRequestURI()));
+        var response = ResponseEntity.status(exception.getStatus()).cacheControl(org.springframework.http.CacheControl.noStore());
+        if (exception.getStatus() == HttpStatus.UNAUTHORIZED) response.header("WWW-Authenticate", "Bearer");
+        return response.body(detail);
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(HttpServletRequest request) {
+        ProblemDetail detail = problem(HttpStatus.FORBIDDEN, "Недостаточно прав.");
+        detail.setProperty("code", "FORBIDDEN");
+        detail.setInstance(URI.create(request.getRequestURI()));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(detail);
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException exception, HttpHeaders headers,

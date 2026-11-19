@@ -45,7 +45,7 @@ class BackendApplicationTest extends PostgresTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))
                 .andExpect(jsonPath("$.components").doesNotExist());
-        mvc.perform(get("/actuator/env")).andExpect(status().isNotFound());
+        mvc.perform(get("/actuator/env").with(admin())).andExpect(status().isForbidden());
     }
 
     @Test
@@ -70,7 +70,7 @@ class BackendApplicationTest extends PostgresTestSupport {
 
     @Test
     void missingResourceHasProblemDetailsWithoutQueryParameters() throws Exception {
-        mvc.perform(get("/api/v1/missing").queryParam("token", "private-token"))
+        mvc.perform(get("/api/v1/missing").with(admin()).queryParam("token", "private-token"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(404))
@@ -82,7 +82,7 @@ class BackendApplicationTest extends PostgresTestSupport {
 
     @Test
     void unsupportedMethodPreservesStatusAndAllowHeader() throws Exception {
-        mvc.perform(post("/api/v1"))
+        mvc.perform(post("/api/v1").with(admin()))
                 .andExpect(status().isMethodNotAllowed())
                 .andExpect(header().string("Allow", containsString("GET")))
                 .andExpect(jsonPath("$.status").value(405));
@@ -90,19 +90,19 @@ class BackendApplicationTest extends PostgresTestSupport {
 
     @Test
     void invalidFieldsHaveStructuredErrors() throws Exception {
-        mvc.perform(post("/test/validation").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/v1/test/validation").with(admin()).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.name[0]").value("Укажите название"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.instance").value("/test/validation"));
+                .andExpect(jsonPath("$.instance").value("/api/v1/test/validation"));
     }
 
     @Test
     void unreadableAndUnknownFieldsDoNotExposeRequestContents() throws Exception {
         for (String body : new String[]{"{private-value", "{\"name\":\"Car\",\"private-value\":true}"}) {
-            mvc.perform(post("/test/validation").contentType(MediaType.APPLICATION_JSON).content(body))
+            mvc.perform(post("/api/v1/test/validation").with(admin()).contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.detail").value("Некорректный запрос."))
                     .andExpect(content().string(not(containsString("private-value"))));
@@ -111,7 +111,7 @@ class BackendApplicationTest extends PostgresTestSupport {
 
     @Test
     void unexpectedErrorDoesNotExposeExceptionDetails() throws Exception {
-        mvc.perform(get("/test/failure"))
+        mvc.perform(get("/api/v1/test/failure").with(admin()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(500))
@@ -120,15 +120,21 @@ class BackendApplicationTest extends PostgresTestSupport {
                 .andExpect(content().string(not(containsString("internal-test-detail"))));
     }
 
+    private static org.springframework.test.web.servlet.request.RequestPostProcessor admin() {
+        return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(
+                new carmarket.backend.security.SessionAuthentication(new carmarket.backend.security.SessionUser(
+                        1, java.util.UUID.randomUUID(), "error-test", "Тест", carmarket.backend.domain.RoleCode.ADMIN, false)));
+    }
+
     // Эти маршруты существуют только в тестовом контексте, в рабочий JAR не попадают.
     @RestController
     static class ErrorEndpoints {
-        @PostMapping("/test/validation")
+        @PostMapping("/api/v1/test/validation")
         public ValidationRequest validate(@Valid @RequestBody ValidationRequest request) {
             return request;
         }
 
-        @GetMapping("/test/failure")
+        @GetMapping("/api/v1/test/failure")
         public void fail() {
             throw new IllegalStateException("internal-test-detail");
         }

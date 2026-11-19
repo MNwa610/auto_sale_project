@@ -44,3 +44,17 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
   paths-to-match: /api/v1/**
+
+carmarket:
+  auth:
+    secret-base64: ${JWT_SECRET_BASE64}
+    issuer: carmarket
+    access-ttl: PT10M
+    refresh-ttl: P7D
+    max-failed-attempts: 5
+    lock-duration: PT15M
+    failure-window: PT15M
+  bootstrap:
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+    login: ${BOOTSTRAP_ADMIN_LOGIN:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}

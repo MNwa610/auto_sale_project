@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Проверка переноса и fail-fast валидации на одноразовых БД Docker, без рабочих данных."""
 import argparse
+import base64
 import importlib.util
 import json
 import os
@@ -37,7 +38,9 @@ def main():
     def boot(database, expected_success=True):
         boot_env = environment.copy()
         boot_env.update(DB_URL=f"jdbc:postgresql://127.0.0.1:{port}/{database}",
-                        DB_USER="postgres", DB_PASSWORD=environment["POSTGRES_PASSWORD"])
+                        DB_USER="postgres", DB_PASSWORD=environment["POSTGRES_PASSWORD"],
+                        JWT_SECRET_BASE64=base64.b64encode(secrets.token_bytes(32)).decode(),
+                        BOOTSTRAP_ADMIN_ENABLED="false")
         result = subprocess.run([
             args.java, "-jar", str(jar), "--spring.main.web-application-type=none", "--debug=false",
         ], env=boot_env, capture_output=True, text=True, timeout=60)
