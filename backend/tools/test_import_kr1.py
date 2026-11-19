@@ -60,7 +60,9 @@ def main():
 
     try:
         for attempt in range(100):
-            check = subprocess.run(["docker", "exec", container, "pg_isready", "-U", "postgres"],
+            # Во время initdb образ временно поднимает сервер только на Unix-сокете.
+            # Ждём TCP: иначе можно попасть в остановку временного сервера перед штатным запуском.
+            check = subprocess.run(["docker", "exec", container, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"],
                                    capture_output=True)
             if check.returncode == 0:
                 break

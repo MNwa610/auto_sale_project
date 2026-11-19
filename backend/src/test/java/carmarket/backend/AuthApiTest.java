@@ -62,6 +62,11 @@ class AuthApiTest extends PostgresTestSupport {
         mvc.perform(get("/api/v1/auth/me").header("Authorization", bearer(pair)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.login").value(login))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist()).andExpect(jsonPath("$.password").doesNotExist());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_events WHERE action='LOGIN_SUCCEEDED' AND actor_login=?",
+                Integer.class, login)).isEqualTo(1);
+        String storedHash = jdbc.queryForObject("SELECT password_hash FROM user_credentials WHERE login=?", String.class, login);
+        String events = jdbc.queryForObject("SELECT json_agg(e)::text FROM audit_events e WHERE actor_login=?", String.class, login);
+        assertThat(events).doesNotContain(PASSWORD, storedHash, pair.get("accessToken").asText(), pair.get("refreshToken").asText(), hash);
     }
 
     @Test
@@ -107,6 +112,11 @@ class AuthApiTest extends PostgresTestSupport {
         refresh(renewed, 401);
         assertThat(attempt(login, PASSWORD).getResponse().getStatus()).isEqualTo(401);
         assertThat(attempt(login, "ChangedPassword43!").getResponse().getStatus()).isEqualTo(200);
+        String passwordAudit = jdbc.queryForObject("SELECT details::text FROM audit_events "
+                + "WHERE action='PASSWORD_CHANGED' AND actor_login=?", String.class, login);
+        assertThat(json.readTree(passwordAudit).get("revokedSessions").asInt()).isEqualTo(1);
+        assertThat(json.readTree(passwordAudit).get("mustChangePassword").asBoolean()).isFalse();
+        assertThat(passwordAudit).doesNotContain(PASSWORD, "ChangedPassword43!", old.get("refreshToken").asText());
     }
 
     @Test
@@ -134,6 +144,9 @@ class AuthApiTest extends PostgresTestSupport {
         assertThat(second.get("refreshExpiresAt")).isEqualTo(first.get("refreshExpiresAt"));
         mvc.perform(get("/api/v1/auth/me").header("Authorization", bearer(first))).andExpect(status().isUnauthorized());
         refresh(first, 401);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_events WHERE action='REFRESH_REUSE_DETECTED' "
+                        + "AND actor_id IS NULL AND entity_id=(SELECT id::text FROM refresh_sessions WHERE token_hash=?)",
+                Integer.class, carmarket.backend.security.TokenService.hash(first.get("refreshToken").asText()))).isEqualTo(1);
         refresh(second, 401);
         mvc.perform(get("/api/v1/auth/me").header("Authorization", bearer(second))).andExpect(status().isUnauthorized());
     }
@@ -161,6 +174,8 @@ class AuthApiTest extends PostgresTestSupport {
         refresh(first, 401);
         mvc.perform(get("/api/v1/auth/me").header("Authorization", bearer(first))).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/v1/auth/me").header("Authorization", bearer(other))).andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_events WHERE action='LOGOUT' AND actor_login=?",
+                Integer.class, login)).isEqualTo(1);
     }
 
     @Test
@@ -265,6 +280,9 @@ class AuthApiTest extends PostgresTestSupport {
         assertThat(jdbc.queryForObject("SELECT password_hash FROM user_credentials WHERE login='stage3-bootstrap'", String.class)).isEqualTo(hash);
         assertThat(jdbc.queryForObject("SELECT must_change_password FROM users WHERE id="
                 + "(SELECT user_id FROM user_credentials WHERE login='stage3-bootstrap')", Boolean.class)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM audit_events WHERE action='BOOTSTRAP_ADMIN_CREATED' "
+                        + "AND actor_id IS NULL AND entity_id=(SELECT user_id::text FROM user_credentials WHERE login='stage3-bootstrap')",
+                Integer.class)).isEqualTo(1);
     }
 
     @Test

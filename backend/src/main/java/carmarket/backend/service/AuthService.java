@@ -1,6 +1,8 @@
 package carmarket.backend.service;
 
 import carmarket.backend.dto.*;
+import carmarket.backend.domain.AuditAction;
+import carmarket.backend.domain.AuditTarget;
 import carmarket.backend.error.AuthFailure;
 import carmarket.backend.repository.AuthRepository;
 import carmarket.backend.security.*;
@@ -24,15 +26,17 @@ public class AuthService {
     private final TokenService tokens;
     private final Clock clock;
     private final String dummyHash;
+    private final AuditService audit;
 
     public AuthService(AuthRepository repository, PasswordEncoder passwords, PasswordPolicy policy,
-                       AuthProperties properties, TokenService tokens, Clock clock) {
+                       AuthProperties properties, TokenService tokens, Clock clock, AuditService audit) {
         this.repository = repository;
         this.passwords = passwords;
         this.policy = policy;
         this.properties = properties;
         this.tokens = tokens;
         this.clock = clock;
+        this.audit = audit;
         this.dummyHash = passwords.encode(UUID.randomUUID().toString());
     }
 
@@ -62,7 +66,10 @@ public class AuthService {
             throw invalidCredentials();
         }
         repository.clearAttempts(login);
-        return tokens.issue(credential, null, null);
+        TokenResponse response = tokens.issue(credential, null, null);
+        audit.recordAsUser(credential.userId(), AuditAction.LOGIN_SUCCEEDED,
+                AuditTarget.user(credential.userId()), AuditDetails.none());
+        return response;
     }
 
     public TokenResponse refresh(RefreshRequest request) {
@@ -73,7 +80,10 @@ public class AuthService {
         // Вход, обновление, выход и смена пароля блокируют users в одинаковом порядке.
         session = repository.refreshSession(hash).orElseThrow(AuthService::invalidToken);
         if (session.revokedAt() != null) {
-            repository.revokeFamily(session.userId(), session.familyId(), clock.instant());
+            int revoked = repository.revokeFamily(session.userId(), session.familyId(), clock.instant());
+            // Это системная реакция на недействительные credentials, а не действие доказанного автора.
+            if (revoked > 0) audit.recordSystem(AuditAction.REFRESH_REUSE_DETECTED,
+                    AuditTarget.session(session.id()), AuditDetails.sessionsRevoked(revoked));
             throw invalidToken();
         }
         SessionUser user = repository.sessionUser(session.userId(), session.id(), clock.instant())
@@ -82,6 +92,8 @@ public class AuthService {
         TokenResponse response = tokens.issue(credential, session.familyId(), session.expiresAt());
         UUID newSession = repository.refreshSession(TokenService.hash(response.refreshToken())).orElseThrow().id();
         repository.rotate(session.id(), newSession, clock.instant());
+        audit.recordAsUser(user.id(), AuditAction.REFRESH_ROTATED,
+                AuditTarget.session(session.id()), AuditDetails.sessionsRevoked(1));
         return response;
     }
 
@@ -89,7 +101,9 @@ public class AuthService {
         validateRefreshInput(request.refreshToken());
         repository.refreshSession(TokenService.hash(request.refreshToken())).ifPresent(session -> {
             repository.lockUser(session.userId());
-            repository.revokeFamily(session.userId(), session.familyId(), clock.instant());
+            int revoked = repository.revokeFamily(session.userId(), session.familyId(), clock.instant());
+            if (revoked > 0) audit.recordAsUser(session.userId(), AuditAction.LOGOUT,
+                    AuditTarget.session(session.id()), AuditDetails.sessionsRevoked(revoked));
         });
     }
 
@@ -105,8 +119,11 @@ public class AuthService {
             throw new AuthFailure(HttpStatus.BAD_REQUEST, "PASSWORD_REUSE", "Новый пароль должен отличаться от текущего.");
         }
         repository.changePassword(user.id(), passwords.encode(request.newPassword()), clock.instant());
-        repository.revokeAll(user.id(), clock.instant());
-        return tokens.issue(repository.credential(current.login()).orElseThrow(), null, null);
+        int revoked = repository.revokeAll(user.id(), clock.instant());
+        TokenResponse response = tokens.issue(repository.credential(current.login()).orElseThrow(), null, null);
+        audit.recordAsUser(user.id(), AuditAction.PASSWORD_CHANGED,
+                AuditTarget.user(user.id()), AuditDetails.passwordChanged(revoked));
+        return response;
     }
 
     private boolean matches(String raw, String hash) {

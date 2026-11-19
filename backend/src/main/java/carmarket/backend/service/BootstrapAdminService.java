@@ -1,6 +1,9 @@
 package carmarket.backend.service;
 
 import carmarket.backend.repository.AuthRepository;
+import carmarket.backend.domain.AuditAction;
+import carmarket.backend.domain.AuditTarget;
+import carmarket.backend.dto.AuditDetails;
 import carmarket.backend.security.PasswordPolicy;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,14 +18,16 @@ public class BootstrapAdminService {
     private final PasswordEncoder passwords;
     private final JdbcTemplate jdbc;
     private final Environment environment;
+    private final AuditService audit;
 
     public BootstrapAdminService(AuthRepository repository, PasswordPolicy policy, PasswordEncoder passwords,
-                                 JdbcTemplate jdbc, Environment environment) {
+                                 JdbcTemplate jdbc, Environment environment, AuditService audit) {
         this.repository = repository;
         this.policy = policy;
         this.passwords = passwords;
         this.jdbc = jdbc;
         this.environment = environment;
+        this.audit = audit;
     }
 
     @Transactional
@@ -39,6 +44,7 @@ public class BootstrapAdminService {
         if (repository.credential(login).isPresent()) {
             throw new IllegalStateException("Логин bootstrap уже существует; выберите новый логин администратора");
         }
-        repository.createAdmin(login, passwords.encode(password));
+        long userId = repository.createAdmin(login, passwords.encode(password));
+        audit.recordSystem(AuditAction.BOOTSTRAP_ADMIN_CREATED, AuditTarget.user(userId), AuditDetails.adminCreated());
     }
 }

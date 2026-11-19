@@ -74,13 +74,13 @@ public class AuthRepository {
                 Timestamp.from(now), newId, oldId);
     }
 
-    public void revokeFamily(long userId, UUID familyId, Instant now) {
-        jdbc.update("UPDATE refresh_sessions SET revoked_at=? WHERE user_id=? AND family_id=? AND revoked_at IS NULL",
+    public int revokeFamily(long userId, UUID familyId, Instant now) {
+        return jdbc.update("UPDATE refresh_sessions SET revoked_at=? WHERE user_id=? AND family_id=? AND revoked_at IS NULL",
                 Timestamp.from(now), userId, familyId);
     }
 
-    public void revokeAll(long userId, Instant now) {
-        jdbc.update("UPDATE refresh_sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL",
+    public int revokeAll(long userId, Instant now) {
+        return jdbc.update("UPDATE refresh_sessions SET revoked_at=? WHERE user_id=? AND revoked_at IS NULL",
                 Timestamp.from(now), userId);
     }
 
@@ -107,10 +107,11 @@ public class AuthRepository {
                 + "WHERE r.code='ADMIN' AND u.enabled AND c.password_hash IS NOT NULL)", Boolean.class));
     }
 
-    public void createAdmin(String login, String hash) {
+    public long createAdmin(String login, String hash) {
         Long id = jdbc.queryForObject("INSERT INTO users(full_name, role_id, must_change_password) "
                 + "SELECT 'Администратор системы', id, TRUE FROM roles WHERE code='ADMIN' RETURNING id", Long.class);
         jdbc.update("INSERT INTO user_credentials(user_id, login, password_hash) VALUES (?, ?, ?)", id, login, hash);
+        return java.util.Objects.requireNonNull(id);
     }
 
     private static Instant instant(ResultSet rs, String column) throws SQLException {
