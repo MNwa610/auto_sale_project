@@ -253,4 +253,8 @@ public class CarService implements Searchable<Car> {
         }
         return new BigDecimal(text);
     }
+
+    public long countAll() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

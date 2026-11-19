@@ -359,6 +359,7 @@ public class MainController {
             });
         }
     }
+    
 
     @FXML private void onEditCar() {
         Car selected = selected(carsTable, "Выберите автомобиль для изменения.");
