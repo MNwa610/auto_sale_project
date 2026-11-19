@@ -29,3 +29,7 @@ marketplace_export.xlsx
 # Конфигурация с паролями
 src/main/resources/database.properties
 config.local.properties
+.env
+.env.*
+!.env.example
+__pycache__/

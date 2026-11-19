@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(BackendApplicationTest.ErrorEndpoints.class)
-class BackendApplicationTest {
+class BackendApplicationTest extends PostgresTestSupport {
 
     @Autowired
     private MockMvc mvc;
@@ -40,7 +40,7 @@ class BackendApplicationTest {
     }
 
     @Test
-    void healthIsAvailableWithoutDatabaseAndDoesNotExposeDetails() throws Exception {
+    void healthIncludesDatabaseCheckWithoutExposingDetails() throws Exception {
         mvc.perform(get("/actuator/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"))
