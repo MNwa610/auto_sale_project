@@ -10,7 +10,9 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AuditDetails(Set<Field> changedFields, Integer revokedSessions,
                            RoleCode role, Boolean mustChangePassword) {
-    public enum Field { PASSWORD, MUST_CHANGE_PASSWORD, ENABLED, ROLE }
+    public enum Field { PASSWORD, MUST_CHANGE_PASSWORD, ENABLED, ROLE, NAME,
+        EXTERNAL_CODE, SELLER, MODEL, YEAR, MILEAGE, PRICE, VIN, BODY_TYPE, TRANSMISSION,
+        FUEL_TYPE, ENGINE_VOLUME, DESCRIPTION, STATUS, CERTIFIED, TAGS }
 
     public AuditDetails {
         changedFields = changedFields == null || changedFields.isEmpty() ? Set.of()
@@ -21,6 +23,7 @@ public record AuditDetails(Set<Field> changedFields, Integer revokedSessions,
     }
 
     public static AuditDetails none() { return new AuditDetails(Set.of(), null, null, null); }
+    public static AuditDetails changed(Set<Field> fields) { return new AuditDetails(fields, null, null, null); }
     public static AuditDetails sessionsRevoked(int count) { return new AuditDetails(Set.of(), count, null, null); }
     public static AuditDetails passwordChanged(int count) {
         return new AuditDetails(Set.of(Field.PASSWORD, Field.MUST_CHANGE_PASSWORD), count, null, false);

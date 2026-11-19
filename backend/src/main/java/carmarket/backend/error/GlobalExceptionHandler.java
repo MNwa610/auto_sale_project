@@ -27,6 +27,41 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(ApiFailure.class)
+    public ResponseEntity<ProblemDetail> handleApiFailure(ApiFailure exception, HttpServletRequest request) {
+        return apiProblem(exception.getStatus(), exception.getCode(), exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)
+    public ResponseEntity<ProblemDetail> handleVersionConflict(HttpServletRequest request) {
+        return apiProblem(HttpStatus.CONFLICT, "VERSION_CONFLICT", "Запись изменена другим пользователем. Обновите данные.", request);
+    }
+
+    @ExceptionHandler(org.springframework.dao.PessimisticLockingFailureException.class)
+    public ResponseEntity<ProblemDetail> handleConcurrentChange(HttpServletRequest request) {
+        return apiProblem(HttpStatus.CONFLICT, "CONCURRENT_CHANGE", "Параллельное изменение записи. Повторите запрос.", request);
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ProblemDetail> handleIntegrityConflict(org.springframework.dao.DataIntegrityViolationException exception,
+                                                               HttpServletRequest request) {
+        String state = null;
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.sql.SQLException sql) { state = sql.getSQLState(); break; }
+        }
+        if ("23514".equals(state) || "22001".equals(state)) {
+            return apiProblem(HttpStatus.BAD_REQUEST, "INVALID_DATA", "Данные не соответствуют ограничениям.", request);
+        }
+        return apiProblem(HttpStatus.CONFLICT, "DUPLICATE_OR_RELATED_RECORD", "Запись конфликтует с существующими данными.", request);
+    }
+
+    private ResponseEntity<ProblemDetail> apiProblem(HttpStatus status, String code, String message, HttpServletRequest request) {
+        ProblemDetail detail = problem(status, message);
+        detail.setInstance(URI.create(request.getRequestURI()));
+        detail.setProperty("code", code);
+        return ResponseEntity.status(status).body(detail);
+    }
+
     @ExceptionHandler(AuthFailure.class)
     public ResponseEntity<ProblemDetail> handleAuthFailure(AuthFailure exception, HttpServletRequest request) {
         ProblemDetail detail = problem(exception.getStatus(), exception.getMessage());

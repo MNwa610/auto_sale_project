@@ -22,6 +22,9 @@ public abstract class VersionedEntity extends BaseEntity {
     @PreUpdate
     protected void updateTimestamp() { updatedAt = Instant.now(); }
 
+    /** Изменения характеристик/тегов также должны обновлять версию их владельца. */
+    public void touch() { updateTimestamp(); }
+
     public long getVersion() { return version; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
