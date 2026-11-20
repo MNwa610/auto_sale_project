@@ -20,7 +20,34 @@ public class CarService {
         this.repository = repository; this.catalogs = catalogs; this.age = age; this.audit = audit;
     }
 
-    public List<CarResponse> list() { return repository.findAll().stream().map(this::response).toList(); }
+    public PageResponse<CarResponse> list(CarQuery query) {
+        query.validate(); long total = repository.count(query, age.currentYear());
+        return new PageResponse<>(repository.search(query, age.currentYear(), query.pageNumber()*query.pageSize(), query.pageSize())
+            .stream().map(this::response).toList(),query.pageNumber(),query.pageSize(),total,(total+query.pageSize()-1)/query.pageSize());
+    }
+    public List<CarResponse> export(CarQuery query) {
+        query.validate();
+        if(repository.count(query,age.currentYear())>10000) throw ApiFailure.invalid("Экспорт ограничен 10000 строк. Уточните фильтры.");
+        return repository.search(query,age.currentYear(),0,10000).stream().map(this::response).toList();
+    }
+    @Transactional
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
+    public CarResponse archive(UUID id, Long version, boolean archived) {
+        Car car=require(id,true); CatalogService.checkVersion(car.getVersion(),version);
+        if(car.isArchived()!=archived) {
+            car.setArchived(archived); repository.flush();
+            audit.recordAsCurrentUser(archived?AuditAction.ARCHIVED:AuditAction.RESTORED,AuditTarget.car(id),AuditDetails.none());
+        }
+        return response(car);
+    }
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void delete(UUID id, Long version) {
+        Car car=require(id,true); CatalogService.checkVersion(car.getVersion(),version);
+        if(!car.isArchived()) throw ApiFailure.conflict("NOT_ARCHIVED","Удаление возможно только из архива.");
+        repository.remove(car); repository.flush();
+        audit.recordAsCurrentUser(AuditAction.DELETED,AuditTarget.car(id),AuditDetails.none());
+    }
     public CarResponse get(UUID id) { return response(require(id, false)); }
     public List<SellerResponse> sellers() { return repository.sellers(); }
 

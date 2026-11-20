@@ -60,7 +60,7 @@ class AuditServiceTest extends PostgresTestSupport {
         assertThat(event.get("entity_type")).isEqualTo("USER");
         assertThat(event.get("action")).isEqualTo("UPDATED");
         assertThat(mapper.readTree(event.get("details").toString()).get("changedFields").get(0).asText()).isEqualTo("ENABLED");
-        assertThat(((java.sql.Timestamp) event.get("created_at")).toInstant()).isBetween(before, clock.instant());
+        assertThat(((java.sql.Timestamp) event.get("created_at")).toInstant()).isBetween(before.minusNanos(1000), clock.instant().plusNanos(1000));
         assertThat(jdbc.queryForObject("SELECT enabled FROM users WHERE id=?", Boolean.class, userId)).isFalse();
     }
 

@@ -116,7 +116,7 @@ class CrudApiTest extends PostgresTestSupport {
         mvc.perform(delete("/api/v1/cars/" + created.get("id").asText()).with(as(manager, RoleCode.MANAGER)))
                 .andExpect(status().isForbidden());
         mvc.perform(delete("/api/v1/cars/" + created.get("id").asText()).with(as(admin, RoleCode.ADMIN)))
-                .andExpect(status().isMethodNotAllowed());
+                .andExpect(status().isBadRequest());
         mvc.perform(post("/api/v1/catalogs/brands").with(as(manager, RoleCode.MANAGER))
                         .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(catalog(name(), null))))
                 .andExpect(status().isForbidden());

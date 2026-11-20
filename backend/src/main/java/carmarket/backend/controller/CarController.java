@@ -2,6 +2,7 @@ package carmarket.backend.controller;
 
 import carmarket.backend.dto.*;
 import carmarket.backend.service.CarService;
+import carmarket.backend.service.BulkCarService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,8 +18,19 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearerAuth")
 public class CarController {
     private final CarService service;
-    public CarController(CarService service) { this.service = service; }
-    @GetMapping public List<CarResponse> list() { return service.list(); }
+    private final BulkCarService bulk;
+    public CarController(CarService service, BulkCarService bulk) { this.service = service; this.bulk=bulk; }
+    @GetMapping public PageResponse<CarResponse> list(@ModelAttribute CarQuery query) { return service.list(query); }
+    @PostMapping("/{id}/archive") public CarResponse archive(@PathVariable UUID id,@Valid @RequestBody VersionRequest request) {
+        return service.archive(id,request.version(),true);
+    }
+    @PostMapping("/{id}/restore") public CarResponse restore(@PathVariable UUID id,@Valid @RequestBody VersionRequest request) {
+        return service.archive(id,request.version(),false);
+    }
+    @DeleteMapping("/{id}") public ResponseEntity<Void> delete(@PathVariable UUID id,@RequestParam Long version) {
+        service.delete(id,version); return ResponseEntity.noContent().build();
+    }
+    @PostMapping("/bulk") public List<BulkCarService.Result> bulk(@Valid @RequestBody BulkRequest request) { return bulk.apply(request); }
     @GetMapping("/sellers") public List<SellerResponse> sellers() { return service.sellers(); }
     @GetMapping("/{id}") public CarResponse get(@PathVariable UUID id) { return service.get(id); }
     @PostMapping public ResponseEntity<CarResponse> create(@Valid @RequestBody CarWriteRequest request) {
