@@ -173,3 +173,8 @@ $env:KR3_TEST_DB_USER='test_user'
 $env:KR3_TEST_DB_PASSWORD='test_password'
 mvn -f backend/pom.xml clean verify
 ```
+
+## Аналитика и администрирование
+
+См. [контракты аналитики, аудита и управления пользователями](docs/REPORTING_ADMIN.md).
+Порядок запуска React описан в [документации frontend](../frontend/README.md).

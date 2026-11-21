@@ -47,6 +47,59 @@ class AuthApiTest extends PostgresTestSupport {
     @BeforeEach void resetTime() { clock.now = Instant.parse("2030-01-01T12:00:00Z"); }
 
     @Test
+    void adminManagesTemporaryPasswordsRolesAndServerSessions() throws Exception {
+        JsonNode admin = login(user("ADMIN", false));
+        JsonNode viewer = login(user("VIEWER", false));
+        String endpoint = "/api/v1/admin/users";
+        String login = "managed-" + UUID.randomUUID();
+        mvc.perform(get(endpoint).header("Authorization", bearer(viewer))).andExpect(status().isForbidden());
+        JsonNode created = body(mvc.perform(post(endpoint).header("Authorization", bearer(admin))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of("login", login,
+                        "fullName", "Managed user", "role", "VIEWER", "temporaryPassword", PASSWORD))))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.mustChangePassword").value(true))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist()).andReturn());
+        String resource = endpoint + "/" + created.get("id").asLong();
+        JsonNode temporary = login(login);
+        mvc.perform(get("/api/v1/analytics").header("Authorization", bearer(temporary)))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("PASSWORD_CHANGE_REQUIRED"));
+        String newPassword = "ChangedPassword43!";
+        JsonNode changed = body(mvc.perform(post("/api/v1/auth/password").header("Authorization", bearer(temporary))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of(
+                        "currentPassword", PASSWORD, "newPassword", newPassword))))
+                .andExpect(status().isOk()).andReturn());
+
+        mvc.perform(put(resource).header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"MANAGER\",\"enabled\":true,\"version\":0}")).andExpect(status().isConflict());
+        mvc.perform(put(resource).header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"MANAGER\",\"enabled\":true,\"version\":1}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.role").value("MANAGER"));
+        mvc.perform(get("/api/v1/auth/me").header("Authorization", bearer(changed))).andExpect(status().isUnauthorized());
+        assertThat(refreshResult(changed).getResponse().getStatus()).isEqualTo(401);
+
+        JsonNode manager = body(attempt(login, newPassword));
+        mvc.perform(post(resource + "/revoke-sessions").header("Authorization", bearer(admin)))
+                .andExpect(status().isOk()).andExpect(content().string("1"));
+        assertThat(refreshResult(manager).getResponse().getStatus()).isEqualTo(401);
+
+        JsonNode reset = body(mvc.perform(post(resource + "/temporary-password").header("Authorization", bearer(admin))
+                .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of(
+                        "temporaryPassword", PASSWORD, "version", 2))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.mustChangePassword").value(true)).andReturn());
+        assertThat(attempt(login, newPassword).getResponse().getStatus()).isEqualTo(401);
+        JsonNode again = login(login);
+        mvc.perform(put(resource).header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(Map.of("role", "MANAGER", "enabled", false, "version", reset.get("version")))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.enabled").value(false));
+        assertThat(refreshResult(again).getResponse().getStatus()).isEqualTo(401);
+        assertThat(attempt(login, PASSWORD).getResponse().getStatus()).isEqualTo(401);
+
+        mvc.perform(put(endpoint + "/" + admin.get("user").get("id").asLong())
+                .header("Authorization", bearer(admin)).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"VIEWER\",\"enabled\":false,\"version\":0}")).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("SELF_ADMIN_CHANGE"));
+    }
+
+    @Test
     void loginIssuesJwtAndStoresOnlyRefreshHash() throws Exception {
         String login = user("VIEWER", false);
         JsonNode pair = login(login.toUpperCase(Locale.ROOT));

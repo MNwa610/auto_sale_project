@@ -43,6 +43,47 @@ class ExtendedApiTest extends PostgresTestSupport {
     }
 
 
+    @Test void analyticsAndAuditMatchControlledChanges() throws Exception {
+        JsonNode before = tree(mvc.perform(get("/api/v1/analytics").with(as(viewer, RoleCode.VIEWER)))
+                .andExpect(status().isOk()).andReturn());
+        var first = car();
+        first.put("price", 125);
+        String id = create(first).get("id").asText();
+        var second = car();
+        second.put("status", "SOLD");
+        second.put("price", 375);
+        create(second);
+        action(id, "archive", 0, 200);
+        action(id, "restore", 1, 200);
+
+        JsonNode after = tree(mvc.perform(get("/api/v1/analytics").with(as(viewer, RoleCode.VIEWER)))
+                .andExpect(status().isOk()).andReturn());
+        JsonNode totals = after.get("totals");
+        JsonNode initial = before.get("totals");
+        assertThat(totals.get("count").asLong()).isEqualTo(initial.get("count").asLong() + 2);
+        assertThat(totals.get("available").asLong()).isEqualTo(initial.get("available").asLong() + 1);
+        assertThat(totals.get("sold").asLong()).isEqualTo(initial.get("sold").asLong() + 1);
+        assertThat(totals.get("certified").asLong()).isEqualTo(initial.get("certified").asLong() + 2);
+        assertThat(totals.get("totalPrice").decimalValue())
+                .isEqualByComparingTo(initial.get("totalPrice").decimalValue().add(BigDecimal.valueOf(500)));
+        assertThat(totals.get("averagePrice").decimalValue()).isEqualByComparingTo(totals.get("totalPrice")
+                .decimalValue().divide(BigDecimal.valueOf(totals.get("count").asLong()), 2, java.math.RoundingMode.HALF_UP));
+        assertThat(after.get("brands").findValues("id").stream().anyMatch(node -> node.asLong() == brand)).isTrue();
+
+        mvc.perform(get("/api/v1/audit").with(as(manager, RoleCode.MANAGER))).andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/audit").with(as(admin, RoleCode.ADMIN)).param("entityType", "CAR")
+                .param("entityId", id).param("size", "1").param("page", "1").param("sort", "createdAt,asc"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.content[0].action").value("ARCHIVED"));
+        mvc.perform(get("/api/v1/audit").with(as(admin, RoleCode.ADMIN)).param("entityId", id)
+                .param("action", "RESTORED").param("from", "2020-01-01T00:00:00Z").param("to", "2040-01-01T00:00:00Z"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1));
+        mvc.perform(get("/api/v1/audit").with(as(admin, RoleCode.ADMIN)).param("sort", "details,asc"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/v1/audit").with(as(admin, RoleCode.ADMIN)).param("size", "101"))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test void searchCombinesFiltersAndPaginatesStably() throws Exception {
         var one=car(); one.put("year",2031); one.put("price",100); one.put("externalCode","needle-%_"+UUID.randomUUID());
         JsonNode first=create(one); var two=car();two.put("price",100);create(two);

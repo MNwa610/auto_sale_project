@@ -1,0 +1,67 @@
+* { box-sizing: border-box; }
+:root { font-family: system-ui, sans-serif; color: #172528; background: #f1f5f4; line-height: 1.5; }
+body { margin: 0; }
+a { color: #086357; }
+a:hover { text-decoration-thickness: 2px; }
+button, .button, input, select, textarea { font: inherit; }
+button, .button { display: inline-block; border: 1px solid #bdceca; border-radius: .55rem; background: white;
+  color: #1a3b36; padding: .48rem .75rem; cursor: pointer; text-decoration: none; }
+button:hover:not(:disabled), .button:hover { background: #ecf5f2; }
+button:disabled { opacity: .48; cursor: default; }
+.primary, .primary:hover:not(:disabled) { background: #086054; color: white; border-color: #086054; }
+.primary:hover:not(:disabled) { background: #034c43; }
+.danger { color: #9c2c32; }
+:focus-visible { outline: 3px solid #d67b2d; outline-offset: 3px; }
+.masthead { padding: .9rem max(1.25rem, calc((100% - 76rem)/2)); background: #113934; color: white;
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.wordmark { font-weight: 750; font-size: 1.4rem; text-decoration: none; }
+.masthead a { color: white; }
+.identity { font-size: .9rem; }
+nav { display: flex; gap: .35rem; padding: .55rem max(1.25rem, calc((100% - 76rem)/2)); flex-wrap: wrap;
+  background: white; border-bottom: 1px solid #d8e4e0; }
+nav a { padding: .45rem .75rem; border-radius: .4rem; text-decoration: none; white-space: nowrap; }
+nav a[aria-current] { background: #ddecE7; font-weight: 650; }
+main { width: min(76rem, calc(100% - 2.5rem)); margin: 2rem auto 4rem; }
+h1, h2 { margin: 0; line-height: 1.2; letter-spacing: -.025em; }
+h1 { font-size: clamp(1.8rem, 3vw, 2.65rem); margin-bottom: .7rem; }
+h2 { font-size: 1.35rem; }
+p { margin: .55rem 0; }
+.row, .title-row { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; }
+.title-row { justify-content: space-between; margin-bottom: .85rem; }
+.title-row h1 { margin-bottom: 0; }
+.panel { padding: clamp(.85rem, 2vw, 1.35rem); background: white; border: 1px solid #d9e3e1;
+  border-radius: .85rem; margin: .85rem 0; }
+.sign-in { max-width: 29rem; margin: clamp(2rem, 10vh, 7rem) auto; }
+.fields, .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .8rem 1rem; }
+.field { display: grid; gap: .3rem; align-content: start; font-size: .89rem; font-weight: 600; margin-bottom: .8rem; }
+input:not([type=checkbox]), select, textarea { min-width: 0; width: 100%; border: 1px solid #b9ccc6; color: inherit;
+  border-radius: .45rem; background: white; padding: .5rem .65rem; }
+textarea { resize: vertical; }
+.check { display: flex; gap: .4rem; align-items: center; margin: .4rem 0 .8rem; }
+summary { cursor: pointer; }
+form details { margin-bottom: .85rem; }
+details .fields { margin-top: .75rem; }
+.error { background: #fff0ef; border: 1px solid #efb9b8; color: #821f27; padding: .65rem .85rem;
+  border-radius: .5rem; margin: .65rem 0; }
+.error button { display: block; margin-top: .5rem; }
+.table-scroll { overflow: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: .65rem .55rem; border-bottom: 1px solid #e1e9e7; vertical-align: middle; }
+th { color: #46605a; font-size: .83rem; white-space: nowrap; }
+td small { display: block; color: #576965; }
+.muted, dt { color: #526661; }
+.pager { justify-content: flex-end; padding-top: .9rem; }
+.status { white-space: nowrap; padding: .2rem .55rem; background: #e4eee9; color: #135548; border-radius: .35rem; }
+.status[data-status=RESERVED] { background: #fff0d6; color: #744507; }
+.status[data-status=SOLD] { background: #e8edee; color: #485e65; }
+.note { border-top: 1px solid #dbe5e1; padding-top: .7rem; margin-top: .7rem; }
+.preserve { white-space: pre-wrap; overflow-wrap: anywhere; }
+.back { display: inline-block; margin-bottom: .8rem; }
+.facts { margin: 0; }
+dd { margin: .2rem 0 0; font-weight: 650; }
+.metric-grid .panel { margin: 0; }
+.metric-grid dd { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.bar-row { display: grid; grid-template-columns: minmax(5rem, 12rem) 1fr 3rem; align-items: center; gap: .75rem; margin: .7rem 0; }
+meter { width: 100%; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 36rem) { main { width: calc(100% - 1.25rem); margin-top: 1rem; } .masthead, nav { padding-inline: .65rem; } }
