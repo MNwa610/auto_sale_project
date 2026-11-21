@@ -3,7 +3,7 @@
 Самостоятельный Maven-проект. JavaFX-клиент КР2 находится в соседнем `../src/`
 и продолжает собираться через `../pom.xml`. Backend не зависит от JavaFX.
 
-## Состояние: этап 5
+## Состояние проекта
 
 Реализованы запуск Spring Boot, базовый REST endpoint, валидация запросов,
 общая обработка ошибок, OpenAPI/Swagger UI и Actuator health.
@@ -13,7 +13,7 @@
 Health проверяет в том числе соединение с БД. Backend не выполняет `../database.sql`.
 Добавлены Spring Security, роли, BCrypt, access JWT, refresh-сессии,
 смена пароля и ограничение попыток входа. Служебные endpoint ниже доступны без
-входа. Frontend и Docker Compose пока не добавлены.
+входа. Для запуска API, PostgreSQL и React вместе см. [Docker Compose](../docs/KR3_DOCKER.md).
 Контракт авторизации и первый вход: [`docs/AUTH.md`](docs/AUTH.md).
 Транзакционный аудит и подключённые события: [`docs/AUDIT.md`](docs/AUDIT.md).
 Автомобили и справочники: [`docs/CARS.md`](docs/CARS.md).
